@@ -1,0 +1,4 @@
+# Root .gitignore
+node_modules/
+.env
+/metameal_scaffold.zip
