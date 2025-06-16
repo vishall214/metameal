@@ -1,19 +1,16 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { FaUser, FaSignOutAlt } from 'react-icons/fa';
 
-const Nav = styled.nav`
-  background: rgba(0, 41, 40, 0.95);
+const NavbarContainer = styled.nav`
+  background: var(--bg-dark);
   padding: 1rem 2rem;
-  position: fixed;
-  width: 100%;
-  top: 0;
-  z-index: 1000;
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(0, 181, 176, 0.1);
+  border-bottom: 1px solid var(--border);
 `;
 
-const NavContainer = styled.div`
+const NavContent = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
@@ -22,11 +19,12 @@ const NavContainer = styled.div`
 `;
 
 const Logo = styled(Link)`
-  color: var(--primary);
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: bold;
+  color: var(--primary);
   text-decoration: none;
-  
+  transition: color 0.3s ease;
+
   &:hover {
     color: var(--primary-light);
   }
@@ -35,50 +33,83 @@ const Logo = styled(Link)`
 const NavLinks = styled.div`
   display: flex;
   gap: 2rem;
+  align-items: center;
 `;
 
 const NavLink = styled(Link)`
   color: var(--text-light);
   text-decoration: none;
   font-weight: 500;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: var(--primary);
+  }
+`;
+
+const AuthButton = styled.button`
   padding: 0.5rem 1rem;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    color: var(--primary-light);
-    background: rgba(0, 181, 176, 0.1);
-  }
-`;
-
-const ActionButton = styled(Link)`
-  color: ${props => props.primary ? 'var(--bg-dark)' : 'var(--text-light)'};
   background: ${props => props.primary ? 'var(--primary)' : 'transparent'};
-  text-decoration: none;
-  font-weight: 600;
-  padding: 0.5rem 1.5rem;
-  border-radius: 6px;
-  border: 2px solid ${props => props.primary ? 'var(--primary)' : 'var(--primary-light)'};
+  color: ${props => props.primary ? 'var(--bg-dark)' : 'var(--text-light)'};
+  border: 1px solid ${props => props.primary ? 'var(--primary)' : 'var(--border)'};
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 
   &:hover {
-    transform: translateY(-2px);
     background: ${props => props.primary ? 'var(--primary-light)' : 'rgba(0, 181, 176, 0.1)'};
-    border-color: var(--primary-light);
+    transform: translateY(-2px);
   }
 `;
 
-export default function Navbar() {
+const Navbar = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Failed to log out:', error);
+    }
+  };
+
   return (
-    <Nav>
-      <NavContainer>
+    <NavbarContainer>
+      <NavContent>
         <Logo to="/">MetaMeal</Logo>
         <NavLinks>
-          <NavLink to="/contact">Contact Us</NavLink>
-          <ActionButton to="/login">Sign In</ActionButton>
-          <ActionButton to="/register" primary>Sign Up</ActionButton>
+          {user ? (
+            <>
+              <NavLink to="/meal-plan">Meal Plan</NavLink>
+              <NavLink to="/recommendations">Recommendations</NavLink>
+              <NavLink to="/quiz">Quiz</NavLink>
+              <NavLink to="/contact">Contact Us</NavLink>
+              <AuthButton onClick={handleLogout}>
+                <FaSignOutAlt /> Logout
+              </AuthButton>
+            </>
+          ) : (
+            <>
+              <NavLink to="/about">About</NavLink>
+              <NavLink to="/contact">Contact Us</NavLink>
+              <AuthButton onClick={() => navigate('/login')}>
+                Login
+              </AuthButton>
+              <AuthButton primary onClick={() => navigate('/register')}>
+                <FaUser /> Sign Up
+              </AuthButton>
+            </>
+          )}
         </NavLinks>
-      </NavContainer>
-    </Nav>
+      </NavContent>
+    </NavbarContainer>
   );
-}
+};
+
+export default Navbar; 

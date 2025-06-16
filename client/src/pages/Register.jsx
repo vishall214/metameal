@@ -1,77 +1,225 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { registerUser } from '../services/api';
-import {
-  Container,
-  FormCard,
-  Title,
-  Input,
-  Button,
-  Error,
-  LinkText
-} from '../styles/FormStyles';
+import { useNavigate, Link } from 'react-router-dom';
+import styled from 'styled-components';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-toastify';
+import BackButton from '../components/BackButton';
+
+const RegisterContainer = styled.div`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--bg-dark);
+  position: relative;
+`;
+
+const RegisterForm = styled.form`
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const Title = styled.h1`
+  color: var(--primary);
+  margin-bottom: 2rem;
+  text-align: center;
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+const Label = styled.label`
+  display: block;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-light);
+  font-size: 1rem;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+`;
+
+const Button = styled.button`
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: var(--primary-light);
+  }
+
+  &:disabled {
+    background: #666;
+    cursor: not-allowed;
+  }
+`;
+
+const LinkText = styled.p`
+  text-align: center;
+  margin-top: 1rem;
+  color: var(--text-light);
+
+  a {
+    color: var(--primary);
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
 
 export default function Register() {
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     username: '',
     name: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { register } = useAuth();
   const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!formData.username || !formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return;
+    }
+
     try {
-      const res = await registerUser(form);
-      if (res.token) {
-        localStorage.setItem('token', res.token);
-        navigate('/quiz'); // Redirect to quiz after registration
+      setLoading(true);
+      const result = await register({
+        username: formData.username,
+        name: formData.name,
+        email: formData.email.toLowerCase(),
+        password: formData.password
+      });
+      
+      if (result.success) {
+        toast.success('Registration successful!');
+        navigate('/quiz');
       } else {
-        setError(res.message || 'Registration failed');
+        toast.error(result.error || 'Failed to register');
       }
-    } catch (err) {
-      setError('An error occurred');
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error(error.response?.data?.error || 'An unexpected error occurred');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Container>
-      <FormCard onSubmit={handleSubmit}>
+    <RegisterContainer>
+      <BackButton />
+      <RegisterForm onSubmit={handleSubmit}>
         <Title>Create Account</Title>
-        {error && <Error>{error}</Error>}
-        <Input
-          placeholder="Username"
-          value={form.username}
-          onChange={(e) => setForm({ ...form, username: e.target.value })}
-          required
-        />
-        <Input
-          placeholder="Full Name"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          required
-        />
-        <Input
-          type="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          required
-        />
-        <Input
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          required
-        />
-        <Button type="submit">Register</Button>
+        <FormGroup>
+          <Label htmlFor="username">Username</Label>
+          <Input
+            type="text"
+            id="username"
+            value={formData.username}
+            onChange={handleChange}
+            placeholder="Choose a username"
+            required
+          />
+        </FormGroup>
+        <FormGroup>
+          <Label htmlFor="name">Full Name</Label>
+          <Input
+            type="text"
+            id="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="Enter your full name"
+            required
+          />
+        </FormGroup>
+        <FormGroup>
+          <Label htmlFor="email">Email</Label>
+          <Input
+            type="email"
+            id="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Enter your email"
+            required
+          />
+        </FormGroup>
+        <FormGroup>
+          <Label htmlFor="password">Password</Label>
+          <Input
+            type="password"
+            id="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="Enter your password"
+            required
+          />
+        </FormGroup>
+        <FormGroup>
+          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <Input
+            type="password"
+            id="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            placeholder="Confirm your password"
+            required
+          />
+        </FormGroup>
+        <Button type="submit" disabled={loading}>
+          {loading ? 'Creating Account...' : 'Register'}
+        </Button>
         <LinkText>
           Already have an account? <Link to="/login">Login</Link>
         </LinkText>
-      </FormCard>
-    </Container>
+      </RegisterForm>
+    </RegisterContainer>
   );
 }

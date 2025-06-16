@@ -1,45 +1,58 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./config/db');
-const authRoutes = require('./routes/authRoutes');
-const mealRoutes = require('./routes/mealRoutes');
+const morgan = require('morgan');
+const config = require('./config/config');
+const connectDB = require('./config/database');
+const { errorHandler, notFound } = require('./middlewares/errorMiddleware');
+const mongoose = require('mongoose');
+require('dotenv').config();
 
-const app = express();
+
+// Import routes
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const mealRoutes = require('./routes/mealRoutes');
+const mealPlanRoutes = require('./routes/mealPlanRoutes');
+const consultationRoutes = require('./routes/consultationRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const quizRoutes = require('./routes/quizRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 // Connect to MongoDB
 connectDB();
 
-// Middleware
+const app = express();
+
+// Global middlewares
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/meals', mealRoutes);
+app.use(express.urlencoded({ extended: false }));
+app.use(morgan('dev'));
 
 // Health check route
-app.get('/', (req, res) => {
-  res.json({ message: 'MetaMeal API is running.' });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
-});
-
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error('❌ Error:', err.message);
-  res.status(err.statusCode || 500).json({
-    success: false,
-    message: err.message || 'Internal Server Error',
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok',
+    environment: config.NODE_ENV,
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
 
-const PORT = process.env.PORT || 5000;
+// API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/meals', mealRoutes);
+app.use('/api/meal-plans', mealPlanRoutes);
+app.use('/api/consultations', consultationRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/quiz', quizRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+// Error Handling
+app.use(notFound);
+app.use(errorHandler);
+
+// Start server
+app.listen(config.PORT, () => {
+  console.log(`🚀 Server running on port ${config.PORT} in ${config.NODE_ENV} mode`);
 });

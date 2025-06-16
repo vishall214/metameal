@@ -1,0 +1,63 @@
+:root {
+  /* Theme Colors */
+  --primary: #00B5B0;
+  --primary-light: #33C9C4;
+  --accent: #FF6B6B;
+  --bg-dark: #0A2928;
+  --bg-light: #0F3635;
+  --text-light: #E1E1E6;
+  --text-dark: #A8A8B3;
+  --error: #FF6B6B;
+  --success: #4CAF50;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-dark);
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Toast Customization */
+.Toastify__toast {
+  border-radius: 8px;
+  background: var(--bg-light);
+  color: var(--text-light);
+}
+
+.Toastify__toast--success {
+  border-left: 4px solid var(--success);
+}
+
+.Toastify__toast--error {
+  border-left: 4px solid var(--error);
+}
+
+.Toastify__progress-bar {
+  background: var(--primary);
+} 

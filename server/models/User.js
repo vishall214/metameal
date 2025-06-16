@@ -1,16 +1,77 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  password: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  age: { type: Number, required: true },
-  height: { type: Number, required: true },
-  weight: { type: Number, required: true },
-  restrictedTags: { type: [String], default: [] },
-  recommendedTags: { type: [String], default: [] },
-  need: { type: String, enum: ['fatloss', 'musclegain', 'weightgain'], required: true },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true
+  },
+  password: {
+    type: String,
+    required: true
+  },
+  role: {
+    type: String,
+    enum: ['user', 'nutritionist', 'admin'],
+    default: 'user'
+  },
+  profile: {
+    age: Number,
+    height: Number,
+    weight: Number,
+    gender: {
+      type: String,
+      enum: ['male', 'female', 'other']
+    },
+    activityLevel: {
+      type: String,
+      enum: ['sedentary', 'light', 'moderate', 'active', 'very_active']
+    },
+    dietaryRestrictions: [String],
+    allergies: [String],
+    goals: [String]
+  },
+  preferences: {
+    mealTypes: [String],
+    cuisineTypes: [String],
+    calorieGoal: Number,
+    proteinGoal: Number,
+    carbGoal: Number,
+    fatGoal: Number
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationToken: String,
+  resetPasswordToken: String,
+  resetPasswordExpire: Date
+}, {
+  timestamps: true,
+  collection: 'User'
 });
 
-module.exports = mongoose.model('User', userSchema);
+// Remove password when converting to JSON
+userSchema.methods.toJSON = function() {
+  const user = this.toObject();
+  delete user.password;
+  delete user.verificationToken;
+  delete user.resetPasswordToken;
+  delete user.resetPasswordExpire;
+  return user;
+};
+
+module.exports = mongoose.model('User', userSchema, 'User');

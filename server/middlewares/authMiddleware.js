@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
+const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 
-const protect = async (req, res, next) => {
+const protect = asyncHandler(async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -17,13 +18,18 @@ const protect = async (req, res, next) => {
 
       next();
     } catch (error) {
-      res.status(401).json({ message: 'Not authorized' });
+      console.error(error);
+      res.status(401);
+      throw new Error('Not authorized');
     }
   }
 
   if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+    res.status(401);
+    throw new Error('Not authorized, no token');
   }
-};
+});
 
-module.exports = { protect };
+module.exports = {
+  protect
+}; 

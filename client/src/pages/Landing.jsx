@@ -1,8 +1,9 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
-import { Link } from 'react-router-dom';
+import Button from '../components/Button';
+import { FaUtensils, FaBrain, FaChartLine, FaUsers } from 'react-icons/fa';
+import Navbar from '../components/Navbar';
 
-// Animations
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px);}
   to { opacity: 1; transform: translateY(0);}
@@ -13,7 +14,6 @@ const slideIn = keyframes`
   to { opacity: 1; transform: translateX(0);}
 `;
 
-// Styled Components
 const HeroSection = styled.section`
   min-height: 100vh;
   display: flex;
@@ -62,30 +62,29 @@ const ButtonGroup = styled.div`
   animation: ${fadeIn} 1s ease-out 0.6s both;
 `;
 
-const Button = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  padding: 1rem 2rem;
-  background: ${props => props.primary ? 'var(--primary)' : 'transparent'};
-  color: ${props => props.primary ? 'var(--bg-dark)' : 'var(--text-light)'};
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 1.1rem;
-  border: 2px solid ${props => props.primary ? 'var(--primary)' : 'var(--primary-light)'};
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    background: ${props => props.primary ? 'var(--primary-light)' : 'rgba(0, 181, 176, 0.1)'};
-    box-shadow: 0 10px 20px rgba(0, 181, 176, 0.2);
-  }
-`;
-
 const FeaturesSection = styled.section`
   padding: 8rem 2rem;
   background: var(--bg-dark);
   position: relative;
+`;
+
+const SectionTitle = styled.div`
+  text-align: center;
+  margin-bottom: 4rem;
+
+  h2 {
+    font-size: 2.5rem;
+    background: linear-gradient(to right, var(--primary-light), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    color: var(--text-light);
+    opacity: 0.8;
+    font-size: 1.1rem;
+  }
 `;
 
 const FeatureGrid = styled.div`
@@ -97,18 +96,15 @@ const FeatureGrid = styled.div`
 
 const FeatureCard = styled.div`
   background: rgba(0, 181, 176, 0.05);
-  backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 2rem;
   border: 1px solid rgba(0, 181, 176, 0.1);
-  transition: all 0.4s ease;
-  animation: ${fadeIn} 1s ease-out;
+  transition: all 0.3s ease;
 
   &:hover {
-    transform: translateY(-10px);
+    transform: translateY(-5px);
     border-color: var(--primary);
-    background: rgba(0, 181, 176, 0.1);
-    box-shadow: 0 20px 40px rgba(0, 181, 176, 0.15);
+    box-shadow: 0 10px 20px rgba(0, 181, 176, 0.1);
   }
 
   h3 {
@@ -118,6 +114,10 @@ const FeatureCard = styled.div`
     display: flex;
     align-items: center;
     gap: 0.75rem;
+
+    svg {
+      color: var(--primary);
+    }
   }
 
   p {
@@ -127,53 +127,25 @@ const FeatureCard = styled.div`
   }
 `;
 
-const SectionTitle = styled.div`
-  text-align: center;
-  margin-bottom: 3rem;
-
-  h2 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    background: linear-gradient(to right, var(--primary), var(--primary-light));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  p {
-    color: var(--text-light);
-    opacity: 0.8;
-    font-size: 1.2rem;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-`;
-
-// Features Data
 const features = [
   {
-    icon: "🎯",
-    title: "Personalized Meal Plans",
-    description: "Get AI-powered meal suggestions tailored to your preferences and nutritional needs."
+    icon: <FaUtensils />,
+    title: "Smart Meal Planning",
+    description: "Get personalized meal plans based on your preferences, dietary restrictions, and health goals."
   },
   {
-    icon: "📊",
+    icon: <FaBrain />,
+    title: "AI-Powered Recommendations",
+    description: "Our AI analyzes your habits and preferences to suggest meals you'll love."
+  },
+  {
+    icon: <FaChartLine />,
     title: "Progress Tracking",
-    description: "Monitor your nutrition goals with detailed analytics and insights."
-  },
-  {
-    icon: "🍽️",
-    title: "Smart Recipe Search",
-    description: "Find recipes that match your dietary restrictions and available ingredients."
-  },
-  {
-    icon: "💪",
-    title: "Health Goals",
-    description: "Set and track your health objectives with our intelligent system."
+    description: "Monitor your nutrition goals and track your progress with detailed analytics."
   }
 ];
 
-// Component
-export default function Landing() {
+const Landing = () => {
   return (
     <>
       <HeroSection>
@@ -185,9 +157,9 @@ export default function Landing() {
               Get personalized recommendations, track your progress, and achieve your health goals.
             </p>
             <ButtonGroup>
-              <Button to="/register" primary>Get Started</Button>
-              <Button to="/quiz">Take Quiz</Button>
-              <Button to="/about">Learn More</Button>
+              <Button to="/register" variant="primary">Get Started</Button>
+              <Button to="/login" variant="secondary">Login</Button>
+              <Button to="/about" variant="outline">Learn More</Button>
             </ButtonGroup>
           </HeroContent>
         </Container>
@@ -211,4 +183,6 @@ export default function Landing() {
       </FeaturesSection>
     </>
   );
-}
+};
+
+export default Landing;
