@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const Meal = require('../models/Meal');
+const Food = require('../models/Food');
 
 // Get user analytics
 const getUserAnalytics = async (req, res) => {
@@ -7,7 +7,7 @@ const getUserAnalytics = async (req, res) => {
     const userId = req.user.id;
 
     // Get user's meal history
-    const meals = await Meal.find({ user: userId });
+    const meals = await Food.find({ user: userId });
 
     // Calculate analytics
     const analytics = {
@@ -39,7 +39,7 @@ const getUserAnalytics = async (req, res) => {
 // Get meal analytics
 const getMealAnalytics = async (req, res) => {
   try {
-    const meals = await Meal.find();
+    const meals = await Food.find();
 
     // Calculate analytics
     const analytics = {

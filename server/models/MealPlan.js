@@ -26,12 +26,12 @@ const mealPlanSchema = new mongoose.Schema({
     },
     mealType: {
       type: String,
-      enum: ['Breakfast', 'Lunch', 'Dinner', 'Snack'],
+      enum: ['breakfast', 'lunch', 'dinner', 'snack'],
       required: true
     },
     meal: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Meal',
+      ref: 'Food',
       required: true
     }
   }],

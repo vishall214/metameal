@@ -1,27 +1,33 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middlewares/auth');
-const mealPlanController = require('../controllers/mealPlanController');
+const {
+  getMealPlans,
+  getMealPlan,
+  createMealPlan,
+  updateMealPlan,
+  deleteMealPlan,
+  generateMealPlan,
+  getActiveMealPlan,
+  updateMealSelection
+} = require('../controllers/mealPlanController');
 
-// Protected routes
+// All routes are protected
 router.use(protect);
 
-// Get user's meal plans
-router.get('/', mealPlanController.getMealPlans);
+// Base routes
+router.route('/')
+  .get(getMealPlans)
+  .post(createMealPlan);
 
-// Get specific meal plan
-router.get('/:id', mealPlanController.getMealPlan);
+router.route('/:id')
+  .get(getMealPlan)
+  .put(updateMealPlan)
+  .delete(deleteMealPlan);
 
-// Create new meal plan
-router.post('/', mealPlanController.createMealPlan);
-
-// Update meal plan
-router.put('/:id', mealPlanController.updateMealPlan);
-
-// Delete meal plan
-router.delete('/:id', mealPlanController.deleteMealPlan);
-
-// Generate meal plan from preferences
-router.post('/generate', mealPlanController.generateMealPlan);
+// Meal plan generation routes
+router.post('/generate', generateMealPlan);
+router.get('/active', getActiveMealPlan);
+router.put('/:id/meal', updateMealSelection);
 
 module.exports = router; 

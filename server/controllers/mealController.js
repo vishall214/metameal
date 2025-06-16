@@ -1,9 +1,17 @@
-const Meal = require('../models/Meal');
+const Food = require('../models/Food');
+const User = require('../models/User');
 
 // Get all meals
 const getMeals = async (req, res) => {
   try {
-    const meals = await Meal.find();
+    const { search } = req.query;
+    let query = {};
+    
+    if (search) {
+      query.name = { $regex: search, $options: 'i' };
+    }
+    
+    const meals = await Food.find(query);
     res.json(meals);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -13,7 +21,7 @@ const getMeals = async (req, res) => {
 // Get single meal
 const getMeal = async (req, res) => {
   try {
-    const meal = await Meal.findById(req.params.id);
+    const meal = await Food.findById(req.params.id);
     if (!meal) {
       return res.status(404).json({ message: 'Meal not found' });
     }
@@ -23,10 +31,36 @@ const getMeal = async (req, res) => {
   }
 };
 
+// Search meals
+const searchMeals = async (req, res) => {
+  try {
+    const { name, course } = req.query;
+    let query = {};
+
+    if (name) {
+      query.name = { $regex: name, $options: 'i' };
+    }
+
+    if (course) {
+      query.course = course.toLowerCase();
+    }
+
+    const meals = await Food.find(query);
+    
+    if (meals.length === 0) {
+      return res.status(404).json({ message: 'No meals found matching your criteria' });
+    }
+    
+    res.json(meals);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Create meal
 const createMeal = async (req, res) => {
   try {
-    const meal = await Meal.create({
+    const meal = await Food.create({
       ...req.body,
       user: req.user.id
     });
@@ -39,7 +73,7 @@ const createMeal = async (req, res) => {
 // Update meal
 const updateMeal = async (req, res) => {
   try {
-    const meal = await Meal.findById(req.params.id);
+    const meal = await Food.findById(req.params.id);
     if (!meal) {
       return res.status(404).json({ message: 'Meal not found' });
     }
@@ -49,7 +83,7 @@ const updateMeal = async (req, res) => {
       return res.status(401).json({ message: 'Not authorized to update this meal' });
     }
 
-    const updatedMeal = await Meal.findByIdAndUpdate(
+    const updatedMeal = await Food.findByIdAndUpdate(
       req.params.id,
       { ...req.body, updatedAt: Date.now() },
       { new: true }
@@ -64,7 +98,7 @@ const updateMeal = async (req, res) => {
 // Delete meal
 const deleteMeal = async (req, res) => {
   try {
-    const meal = await Meal.findById(req.params.id);
+    const meal = await Food.findById(req.params.id);
     if (!meal) {
       return res.status(404).json({ message: 'Meal not found' });
     }
@@ -84,7 +118,7 @@ const deleteMeal = async (req, res) => {
 // Get meals by category
 const getMealsByCategory = async (req, res) => {
   try {
-    const meals = await Meal.find({ categories: req.params.category });
+    const meals = await Food.find({ categories: req.params.category });
     res.json(meals);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -94,7 +128,7 @@ const getMealsByCategory = async (req, res) => {
 // Get meals by tag
 const getMealsByTag = async (req, res) => {
   try {
-    const meals = await Meal.find({ tags: req.params.tag });
+    const meals = await Food.find({ tags: req.params.tag });
     res.json(meals);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -104,15 +138,105 @@ const getMealsByTag = async (req, res) => {
 // Get random meal
 const getRandomMeal = async (req, res) => {
   try {
-    const count = await Meal.countDocuments();
+    const count = await Food.countDocuments();
     const random = Math.floor(Math.random() * count);
-    const meal = await Meal.findOne().skip(random);
+    const meal = await Food.findOne().skip(random);
     
     if (!meal) {
       return res.status(404).json({ message: 'No meals found' });
     }
     
     res.json(meal);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Generate meals based on user preferences
+const generateMeals = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get user preferences
+    const {
+      calorieGoal,
+      proteinGoal,
+      carbGoal,
+      fatGoal
+    } = user.preferences;
+
+    const dietaryRestrictions = user.profile.dietaryRestrictions || [];
+
+    // Calculate meal distribution
+    const mealDistribution = {
+      breakfast: { calories: Math.round(calorieGoal * 0.25) }, // 25% of daily calories
+      lunch: { calories: Math.round(calorieGoal * 0.35) },     // 35% of daily calories
+      dinner: { calories: Math.round(calorieGoal * 0.30) },    // 30% of daily calories
+      snack: { calories: Math.round(calorieGoal * 0.10) }      // 10% of daily calories
+    };
+
+    // Find suitable meals for each category
+    const mealPlan = {};
+    for (const [mealType, targets] of Object.entries(mealDistribution)) {
+      // Find meals that match the criteria
+      const meals = await Food.find({
+        category: mealType.toLowerCase(),
+        calories: { 
+          $gte: targets.calories * 0.9, // Within 10% of target calories
+          $lte: targets.calories * 1.1
+        },
+        // Filter out meals that don't match dietary restrictions
+        tags: { 
+          $nin: dietaryRestrictions
+        }
+      }).limit(3); // Get 3 options for each meal type
+
+      mealPlan[mealType] = meals;
+    }
+
+    res.json({
+      success: true,
+      dailyTargets: {
+        calories: calorieGoal,
+        protein: proteinGoal,
+        carbs: carbGoal,
+        fat: fatGoal
+      },
+      mealDistribution,
+      mealPlan
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get personalized meal recommendations
+const getRecommendedMeals = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { dietaryRestrictions } = user.profile;
+    const { calorieGoal } = user.preferences;
+
+    // Find meals that match user's preferences
+    const meals = await Food.find({
+      calories: { 
+        $lte: Math.round(calorieGoal * 0.4) // No single meal should exceed 40% of daily calories
+      },
+      tags: { 
+        $nin: dietaryRestrictions
+      }
+    })
+    .sort({ calories: -1 })
+    .limit(10);
+
+    res.json(meals);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -126,5 +250,8 @@ module.exports = {
   deleteMeal,
   getMealsByCategory,
   getMealsByTag,
-  getRandomMeal
+  getRandomMeal,
+  generateMeals,
+  getRecommendedMeals,
+  searchMeals
 };

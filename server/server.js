@@ -15,8 +15,8 @@ const mealRoutes = require('./routes/mealRoutes');
 const mealPlanRoutes = require('./routes/mealPlanRoutes');
 const consultationRoutes = require('./routes/consultationRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
-const quizRoutes = require('./routes/quizRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const profileRoutes = require('./routes/profileRoutes');
 
 // Connect to MongoDB
 connectDB();
@@ -45,14 +45,32 @@ app.use('/api/meals', mealRoutes);
 app.use('/api/meal-plans', mealPlanRoutes);
 app.use('/api/consultations', consultationRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/quiz', quizRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Error Handling
 app.use(notFound);
 app.use(errorHandler);
 
-// Start server
-app.listen(config.PORT, () => {
-  console.log(`🚀 Server running on port ${config.PORT} in ${config.NODE_ENV} mode`);
-});
+// Start server with port fallback
+const startServer = (port) => {
+  try {
+    const server = app.listen(port, () => {
+      console.log(`🚀 Server running on port ${port} in ${config.NODE_ENV} mode`);
+    });
+
+    server.on('error', (e) => {
+      if (e.code === 'EADDRINUSE') {
+        console.log(`Port ${port} is busy, trying ${port + 1}...`);
+        startServer(port + 1);
+      } else {
+        console.error('Server error:', e);
+      }
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer(config.PORT);

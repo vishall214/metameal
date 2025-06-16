@@ -17,13 +17,18 @@ const users = [
       gender: 'male',
       height: 180,
       weight: 75,
-      activityLevel: 'moderate'
-    },
-    preferences: {
+      activityLevel: 'moderate',
       dietaryRestrictions: [],
       allergies: [],
-      favoriteCuisines: ['italian', 'indian'],
-      mealPreferences: ['breakfast', 'lunch', 'dinner']
+      goals: ['weight_loss', 'muscle_gain']
+    },
+    preferences: {
+      mealTypes: ['breakfast', 'lunch', 'dinner'],
+      cuisineTypes: ['italian', 'indian'],
+      calorieGoal: 2500,
+      proteinGoal: 180,
+      carbGoal: 250,
+      fatGoal: 80
     }
   },
   {
@@ -37,79 +42,127 @@ const users = [
       gender: 'female',
       height: 165,
       weight: 60,
-      activityLevel: 'active'
-    },
-    preferences: {
+      activityLevel: 'active',
       dietaryRestrictions: ['vegetarian'],
       allergies: ['nuts'],
-      favoriteCuisines: ['mediterranean', 'japanese'],
-      mealPreferences: ['lunch', 'dinner']
+      goals: ['weight_loss']
+    },
+    preferences: {
+      mealTypes: ['lunch', 'dinner'],
+      cuisineTypes: ['mediterranean', 'japanese'],
+      calorieGoal: 2000,
+      proteinGoal: 150,
+      carbGoal: 200,
+      fatGoal: 65
     }
   }
 ];
 
-// Sample meals
+// Sample meals matching our schema
 const meals = [
   {
-    title: 'Grilled Chicken Salad',
-    description: 'A healthy and delicious grilled chicken salad with fresh vegetables',
-    image: 'https://example.com/chicken-salad.jpg',
-    nutritionalInfo: {
-      calories: 350,
-      protein: 30,
-      carbs: 15,
-      fat: 20
-    },
+    title: 'High-Protein Breakfast Bowl',
+    description: 'A protein-rich breakfast bowl with eggs, quinoa, and vegetables',
+    image: 'https://example.com/breakfast-bowl.jpg',
+    calories: 450,
+    protein: 35,
+    carbs: 45,
+    fat: 20,
     prepTime: 15,
     cookTime: 20,
-    servings: 2,
     ingredients: [
-      { name: 'Chicken breast', amount: 200, unit: 'g' },
-      { name: 'Mixed salad greens', amount: 100, unit: 'g' },
-      { name: 'Cherry tomatoes', amount: 50, unit: 'g' },
-      { name: 'Cucumber', amount: 50, unit: 'g' },
-      { name: 'Olive oil', amount: 2, unit: 'tbsp' }
+      { name: 'Eggs', amount: '2', unit: 'large' },
+      { name: 'Quinoa', amount: '100', unit: 'g' },
+      { name: 'Spinach', amount: '50', unit: 'g' },
+      { name: 'Cherry tomatoes', amount: '100', unit: 'g' }
     ],
     instructions: [
-      'Season chicken breast with salt and pepper',
-      'Grill chicken for 8-10 minutes per side',
-      'Chop vegetables and combine in a bowl',
-      'Slice chicken and add to salad',
-      'Drizzle with olive oil and serve'
+      'Cook quinoa according to package instructions',
+      'Sauté spinach and tomatoes',
+      'Poach eggs',
+      'Assemble bowl with quinoa base, vegetables, and top with eggs'
     ],
-    categories: ['lunch', 'dinner'],
-    tags: ['healthy', 'high-protein', 'low-carb']
+    tags: ['high-protein', 'vegetarian', 'healthy', 'weight_loss'],
+    category: 'breakfast',
+    difficulty: 'easy'
   },
   {
-    title: 'Vegetable Stir Fry',
-    description: 'A quick and easy vegetable stir fry with tofu',
-    image: 'https://example.com/stir-fry.jpg',
-    nutritionalInfo: {
-      calories: 300,
-      protein: 15,
-      carbs: 40,
-      fat: 12
-    },
-    prepTime: 10,
+    title: 'Grilled Chicken Salad',
+    description: 'Fresh salad with grilled chicken breast and avocado',
+    image: 'https://example.com/chicken-salad.jpg',
+    calories: 550,
+    protein: 45,
+    carbs: 20,
+    fat: 35,
+    prepTime: 15,
     cookTime: 15,
-    servings: 2,
     ingredients: [
-      { name: 'Tofu', amount: 200, unit: 'g' },
-      { name: 'Broccoli', amount: 100, unit: 'g' },
-      { name: 'Carrots', amount: 50, unit: 'g' },
-      { name: 'Bell peppers', amount: 50, unit: 'g' },
-      { name: 'Soy sauce', amount: 2, unit: 'tbsp' }
+      { name: 'Chicken breast', amount: '200', unit: 'g' },
+      { name: 'Mixed greens', amount: '100', unit: 'g' },
+      { name: 'Avocado', amount: '1', unit: 'medium' },
+      { name: 'Olive oil', amount: '1', unit: 'tbsp' }
     ],
     instructions: [
-      'Cut tofu into cubes',
-      'Chop vegetables into bite-sized pieces',
-      'Heat oil in a wok or large pan',
-      'Stir fry tofu until golden',
-      'Add vegetables and stir fry for 5 minutes',
-      'Add soy sauce and serve'
+      'Grill chicken breast',
+      'Prepare salad base with mixed greens',
+      'Slice avocado',
+      'Top with grilled chicken and drizzle with olive oil'
     ],
-    categories: ['lunch', 'dinner'],
-    tags: ['vegetarian', 'vegan', 'quick']
+    tags: ['high-protein', 'low-carb', 'muscle_gain'],
+    category: 'lunch',
+    difficulty: 'easy'
+  },
+  {
+    title: 'Vegetarian Stir-Fry',
+    description: 'Quick and healthy vegetable stir-fry with tofu',
+    image: 'https://example.com/stir-fry.jpg',
+    calories: 400,
+    protein: 20,
+    carbs: 45,
+    fat: 18,
+    prepTime: 20,
+    cookTime: 15,
+    ingredients: [
+      { name: 'Tofu', amount: '200', unit: 'g' },
+      { name: 'Mixed vegetables', amount: '300', unit: 'g' },
+      { name: 'Brown rice', amount: '100', unit: 'g' },
+      { name: 'Soy sauce', amount: '2', unit: 'tbsp' }
+    ],
+    instructions: [
+      'Press and cube tofu',
+      'Cook brown rice',
+      'Stir-fry vegetables',
+      'Add tofu and sauce',
+      'Serve over rice'
+    ],
+    tags: ['vegetarian', 'vegan', 'weight_loss'],
+    category: 'dinner',
+    difficulty: 'medium'
+  },
+  {
+    title: 'Protein Smoothie',
+    description: 'Quick and nutritious protein smoothie',
+    image: 'https://example.com/smoothie.jpg',
+    calories: 250,
+    protein: 20,
+    carbs: 30,
+    fat: 8,
+    prepTime: 5,
+    cookTime: 0,
+    ingredients: [
+      { name: 'Protein powder', amount: '1', unit: 'scoop' },
+      { name: 'Banana', amount: '1', unit: 'medium' },
+      { name: 'Almond milk', amount: '250', unit: 'ml' },
+      { name: 'Berries', amount: '100', unit: 'g' }
+    ],
+    instructions: [
+      'Add all ingredients to blender',
+      'Blend until smooth',
+      'Serve immediately'
+    ],
+    tags: ['quick', 'high-protein', 'muscle_gain'],
+    category: 'snack',
+    difficulty: 'easy'
   }
 ];
 
@@ -136,11 +189,11 @@ const seedDatabase = async () => {
 
     // Create users
     const createdUsers = await User.create(hashedUsers);
-    console.log('Created users');
+    console.log('Created users:', createdUsers.length);
 
     // Create meals
     const createdMeals = await Meal.create(meals);
-    console.log('Created meals');
+    console.log('Created meals:', createdMeals.length);
 
     console.log('Database seeded successfully');
     process.exit(0);
