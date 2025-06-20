@@ -43,12 +43,11 @@ const userSchema = new mongoose.Schema({
     // User's selected filters, must match Food.filter values exactly
     filters: [{
       type: String,
-      enum: ['veg', 'non-veg', 'diabetes', 'thyroid', 'high BP', 'breakfast', 'main course', 'dessert', 'snacks']
+      enum: ['veg', 'non-veg', 'diabetes', 'thyroid', 'high BP']
     }],
     goals: [String]
   },
   preferences: {
-    mealTypes: [String],
     calorieGoal: Number,
     proteinGoal: Number,
     carbGoal: Number,

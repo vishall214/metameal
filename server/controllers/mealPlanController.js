@@ -82,11 +82,11 @@ const deleteMealPlan = asyncHandler(async (req, res) => {
 // @desc    Generate meal plan based on user profile
 // @route   POST /api/meal-plans/generate
 // @access  Private
+
 const generateMealPlan = asyncHandler(async (req, res) => {
   const { planType = 'daily' } = req.body;
 
   try {
-    // Get user profile and preferences
     const user = await User.findById(req.user._id);
     if (!user) {
       res.status(404);
@@ -94,15 +94,33 @@ const generateMealPlan = asyncHandler(async (req, res) => {
     }
 
     const { profile, preferences } = user;
-    
-    // Calculate date range
-    const startDate = new Date();
-    const endDate = new Date();
-    if (planType === 'weekly') {
-      endDate.setDate(endDate.getDate() + 6);
+    const filters = profile.filters || [];
+    const goals = profile.goals || [];
+    const { calorieGoal, proteinGoal, carbGoal, fatGoal } = preferences;
+
+    function scoreFood(food) {
+      return (
+        Math.abs(food.calories - calorieGoal) +
+        Math.abs(food.protein - proteinGoal) +
+        Math.abs(food.carbs - carbGoal) +
+        Math.abs(food.fats - fatGoal)
+      );
     }
 
-    // Calculate meal calorie distribution
+    function goalFilter(food) {
+      if (goals.includes('Weight Loss')) {
+        return food.calories <= calorieGoal && food.protein >= proteinGoal * 0.7;
+      }
+      if (goals.includes('Muscle Gain')) {
+        return food.protein >= proteinGoal * 0.8;
+      }
+      return true;
+    }
+
+    const startDate = new Date();
+    const endDate = new Date();
+    if (planType === 'weekly') endDate.setDate(endDate.getDate() + 6);
+
     const mealDistribution = {
       breakfast: 0.25,
       lunch: 0.35,
@@ -110,109 +128,112 @@ const generateMealPlan = asyncHandler(async (req, res) => {
       snack: 0.10
     };
 
-    // Find suitable meals for each meal type
-    const mealPlanItems = [];
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const currentDay = startDate.getDay();
     const daysToGenerate = planType === 'weekly' ? 7 : 1;
+    const mealPlanItems = [];
 
     for (let i = 0; i < daysToGenerate; i++) {
       const dayIndex = (currentDay + i) % 7;
       const day = days[dayIndex];
 
       for (const [mealType, percentage] of Object.entries(mealDistribution)) {
-        const targetCalories = Math.round(preferences.calorieGoal * percentage);
-        const calorieRange = {
-          min: targetCalories * 0.9,
-          max: targetCalories * 1.1
-        };
+        const targetCalories = Math.round(calorieGoal * percentage);
+        const calorieRange = { min: targetCalories * 0.9, max: targetCalories * 1.1 };
 
-        // Calculate macro targets for this meal
-        const mealMacroTargets = {
-          protein: Math.round((targetCalories * 0.3) / 4), // 30% from protein
-          carbs: Math.round((targetCalories * 0.4) / 4),   // 40% from carbs
-          fat: Math.round((targetCalories * 0.3) / 9)      // 30% from fat
-        };
+        let foods = [];
 
-        // Query meals matching user filters (profile.filters)
-        let meals = await Food.find({
-          course: mealType.toLowerCase(),
-          calories: {
-            $gte: calorieRange.min,
-            $lte: calorieRange.max
-          },
-          // Only include foods that match at least one user filter
-          filter: { $in: profile.filters && profile.filters.length > 0 ? profile.filters : [/.*/] }
-        }).exec();
-
-        // If no exact matches, relax constraints gradually
-        if (meals.length === 0) {
-          meals = await Food.find({
-            course: mealType.toLowerCase(),
-            calories: {
-              $gte: calorieRange.min * 0.8,
-              $lte: calorieRange.max * 1.2
-            },
-            filter: { $in: profile.filters && profile.filters.length > 0 ? profile.filters : [/.*/] }
-          }).limit(3).exec();
+        // 1. Try strict filter match + course in filter
+        if (filters.length) {
+          foods = await Food.find({
+            calories: { $gte: calorieRange.min, $lte: calorieRange.max },
+            filter: { $all: [...filters, mealType.toLowerCase()] }
+          }).exec();
         }
 
-        // Format meals for response
-        const formattedMeals = meals.map(meal => ({
-          preview: {
-            _id: meal._id.toString(),
-            name: meal.name,
-            photo: meal.photo,
-            calories: meal.calories,
-            course: meal.course,
-            cookingTime: meal.cookingTime
-          },
-          details: {
-            description: meal.description,
-            recipe: meal.recipe,
-            nutritionalInfo: {
-              protein: meal.protein,
-              fats: meal.fats,
-              carbs: meal.carbs,
-              fibre: meal.fibre,
-              sugar: meal.sugar,
-              addedSugar: meal.addedSugar,
-              sodium: meal.sodium
-            },
-            portionSize: meal.portionSize,
-            filter: meal.filter
-          }
-        }));
+        // 2. Any filter match + course in filter
+        if ((!foods || foods.length < 1) && filters.length) {
+          foods = await Food.find({
+            calories: { $gte: calorieRange.min, $lte: calorieRange.max },
+            filter: { $in: [...filters, mealType.toLowerCase()] }
+          }).exec();
+        }
 
-        if (formattedMeals.length > 0) {
-          // Select one meal randomly for this slot
-          const selectedMealIndex = Math.floor(Math.random() * formattedMeals.length);
+        // 3. Match just course (which is inside filter)
+        if (!foods || foods.length < 1) {
+          foods = await Food.find({
+            calories: { $gte: calorieRange.min * 0.8, $lte: calorieRange.max * 1.2 },
+            filter: mealType.toLowerCase()
+          }).exec();
+        }
+
+        // 4. Final fallback: any food with course in filter
+        if (!foods || foods.length < 1) {
+          foods = await Food.find({
+            filter: mealType.toLowerCase()
+          }).exec();
+        }
+
+        foods = foods
+          .filter(goalFilter)
+          .map(food => ({ ...food._doc, score: scoreFood(food) }))
+          .sort((a, b) => a.score - b.score);
+
+        const topFoods = foods.slice(0, 3);
+        if (topFoods.length > 0) {
+          const selectedMealIndex = Math.floor(Math.random() * topFoods.length);
+          const meal = topFoods[selectedMealIndex];
+
           mealPlanItems.push({
             day,
             mealType,
-            meal: formattedMeals[selectedMealIndex],
+            meal: {
+              preview: {
+                _id: meal._id.toString(),
+                name: meal.name,
+                photo: meal.photo,
+                calories: meal.calories,
+                course: meal.course,
+                cookingTime: meal.cookingTime
+              },
+              details: {
+                description: meal.description,
+                recipe: meal.recipe,
+                nutritionalInfo: {
+                  protein: meal.protein,
+                  fats: meal.fats,
+                  carbs: meal.carbs,
+                  fibre: meal.fibre,
+                  sugar: meal.sugar,
+                  addedSugar: meal.addedSugar,
+                  sodium: meal.sodium
+                },
+                portionSize: meal.portionSize,
+                filter: meal.filter
+              }
+            },
             targetNutrition: {
               calories: targetCalories,
-              ...mealMacroTargets
+              protein: proteinGoal * percentage,
+              carbs: carbGoal * percentage,
+              fat: fatGoal * percentage
             }
           });
         }
       }
     }
 
-    // Create new meal plan
     const mealPlan = await MealPlan.create({
       user: req.user._id,
       name: `${planType === 'weekly' ? 'Weekly' : 'Daily'} Plan - ${startDate.toLocaleDateString()}`,
       startDate,
       endDate,
       preferences: {
-        dietaryRestrictions: profile.dietaryRestrictions || [],
-        allergies: profile.allergies || [],
-        calorieGoal: preferences.calorieGoal,
-        proteinGoal: preferences.proteinGoal,
-        carbGoal: preferences.carbGoal,
-        fatGoal: preferences.fatGoal
+        dietaryRestrictions: filters,
+        calorieGoal,
+        proteinGoal,
+        carbGoal,
+        fatGoal
       },
       meals: mealPlanItems.map(item => ({
         day: item.day,
@@ -221,7 +242,6 @@ const generateMealPlan = asyncHandler(async (req, res) => {
       }))
     });
 
-    // Return meal plan with full meal details
     res.status(201).json({
       success: true,
       mealPlan: {
@@ -229,7 +249,6 @@ const generateMealPlan = asyncHandler(async (req, res) => {
         meals: mealPlanItems
       }
     });
-
   } catch (error) {
     console.error('Error generating meal plan:', error);
     res.status(500).json({
