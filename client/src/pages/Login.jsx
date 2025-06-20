@@ -114,8 +114,12 @@ export default function Login() {
       
       if (result.success) {
         toast.success('Login successful!');
-        // Use navigate with replace to prevent back navigation
-        navigate('/home', { replace: true });
+        // Redirect based on quiz completion
+        if (result.user && result.user.quizCompleted) {
+          navigate('/home', { replace: true });
+        } else {
+          navigate('/quiz', { replace: true });
+        }
       } else {
         toast.error(result.error || 'Failed to login');
       }

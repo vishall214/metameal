@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }) => {
           token
         };
         setUser(updatedUser);
-        return { success: true };
+        return { success: true, user: updatedUser };
       } else {
         console.error('Login failed:', response.data.error);
         return {
@@ -157,4 +157,4 @@ export const AuthProvider = ({ children }) => {
       {!loading && children}
     </AuthContext.Provider>
   );
-}; 
+};

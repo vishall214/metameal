@@ -136,10 +136,11 @@ export default function Quiz() {
     age: '',
     height: '',
     weight: '',
+    gender: '',
     activityLevel: 'sedentary',
-    dietaryPreferences: [],
-    healthConditions: [],
-    fitnessGoals: []
+    filters: [], // This will match backend Food.filter
+    goals: []
+    // allergies removed
   });
   const [bmi, setBmi] = useState(null);
 
@@ -148,21 +149,17 @@ export default function Quiz() {
     { value: 'light', label: 'Lightly active (light exercise 1-3 days/week)' },
     { value: 'moderate', label: 'Moderately active (moderate exercise 3-5 days/week)' },
     { value: 'active', label: 'Very active (hard exercise 6-7 days/week)' },
-    { value: 'extra_active', label: 'Extra active (very hard exercise & physical job)' }
+    { value: 'very_active', label: 'Extra active (very hard exercise & physical job)' }
   ];
 
-  const dietaryPreferences = [
-    'Vegetarian', 'Vegan', 'Pescatarian', 'Gluten-free',
-    'Dairy-free'
+  // Only health/dietary filters, no course types
+  const filterOptions = [
+    'veg', 'non-veg', 'diabetes', 'thyroid', 'high BP'
   ];
 
-  const healthConditions = [
-    'Diabetes', 'High Blood Pressure', 'Thyroid'
-  ];
-
-  const fitnessGoals = [
+  const goalOptions = [
     'Weight Loss', 'Muscle Gain', 'Maintenance',
-    'Improved Energy', 'Better Sleep', 'sports performance'
+    'Improved Energy', 'Better Sleep', 'Sports Performance'
   ];
 
   const handleChange = (e) => {
@@ -178,7 +175,7 @@ export default function Quiz() {
       } else {
         setFormData(prev => ({
           ...prev,
-          [name]: array.filter(item => item !== value)
+          [name]: array.filter(v => v !== value)
         }));
       }
     } else {
@@ -192,7 +189,6 @@ export default function Quiz() {
     if (name === 'height' || name === 'weight') {
       const height = name === 'height' ? parseFloat(value) : parseFloat(formData.height);
       const weight = name === 'weight' ? parseFloat(value) : parseFloat(formData.weight);
-
       if (height && weight) {
         const heightInMeters = height / 100;
         const bmiValue = (weight / (heightInMeters * heightInMeters)).toFixed(1);
@@ -218,8 +214,8 @@ export default function Quiz() {
 
     try {
       setLoading(true);
-      await axios.post('/api/quiz', 
-        { ...formData, userId: user._id },
+      await axios.post('/api/users/quiz', 
+        { ...formData },
         {
           headers: {
             Authorization: `Bearer ${user.token}`
@@ -242,7 +238,6 @@ export default function Quiz() {
       <BackButton />
       <QuizForm onSubmit={handleSubmit}>
         <Title>Personalization Quiz</Title>
-        
         <FormGroup>
           <Label htmlFor="age">Age</Label>
           <Input
@@ -257,7 +252,6 @@ export default function Quiz() {
             max="120"
           />
         </FormGroup>
-
         <FormGroup>
           <Label htmlFor="height">Height (cm)</Label>
           <Input
@@ -272,7 +266,6 @@ export default function Quiz() {
             max="250"
           />
         </FormGroup>
-
         <FormGroup>
           <Label htmlFor="weight">Weight (kg)</Label>
           <Input
@@ -287,14 +280,21 @@ export default function Quiz() {
             max="300"
           />
         </FormGroup>
-
-        {bmi && (
-          <BMIResult>
-            <h3>Your BMI: {bmi}</h3>
-            <p>Category: {getBMICategory(bmi)}</p>
-          </BMIResult>
-        )}
-
+        <FormGroup>
+          <Label htmlFor="gender">Gender</Label>
+          <Select
+            id="gender"
+            name="gender"
+            value={formData.gender}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </Select>
+        </FormGroup>
         <FormGroup>
           <Label htmlFor="activityLevel">Activity Level</Label>
           <Select
@@ -311,53 +311,33 @@ export default function Quiz() {
             ))}
           </Select>
         </FormGroup>
-
         <FormGroup>
-          <Label>Dietary Preferences</Label>
+          <Label>Preferences & Health Filters</Label>
           <CheckboxGroup>
-            {dietaryPreferences.map(pref => (
-              <CheckboxLabel key={pref}>
+            {filterOptions.map(opt => (
+              <CheckboxLabel key={opt}>
                 <input
                   type="checkbox"
-                  name="dietaryPreferences"
-                  value={pref}
-                  checked={formData.dietaryPreferences.includes(pref)}
+                  name="filters"
+                  value={opt}
+                  checked={formData.filters.includes(opt)}
                   onChange={handleChange}
                 />
-                {pref}
+                {opt}
               </CheckboxLabel>
             ))}
           </CheckboxGroup>
         </FormGroup>
-
         <FormGroup>
-          <Label>Health Conditions</Label>
+          <Label>Goals</Label>
           <CheckboxGroup>
-            {healthConditions.map(condition => (
-              <CheckboxLabel key={condition}>
-                <input
-                  type="checkbox"
-                  name="healthConditions"
-                  value={condition}
-                  checked={formData.healthConditions.includes(condition)}
-                  onChange={handleChange}
-                />
-                {condition}
-              </CheckboxLabel>
-            ))}
-          </CheckboxGroup>
-        </FormGroup>
-
-        <FormGroup>
-          <Label>Fitness Goals</Label>
-          <CheckboxGroup>
-            {fitnessGoals.map(goal => (
+            {goalOptions.map(goal => (
               <CheckboxLabel key={goal}>
                 <input
                   type="checkbox"
-                  name="fitnessGoals"
+                  name="goals"
                   value={goal}
-                  checked={formData.fitnessGoals.includes(goal)}
+                  checked={formData.goals.includes(goal)}
                   onChange={handleChange}
                 />
                 {goal}
@@ -365,11 +345,16 @@ export default function Quiz() {
             ))}
           </CheckboxGroup>
         </FormGroup>
-
+        {bmi && (
+          <BMIResult>
+            <h3>Your BMI: {bmi}</h3>
+            <p>Category: {getBMICategory(bmi)}</p>
+          </BMIResult>
+        )}
         <Button type="submit" disabled={loading}>
           {loading ? 'Submitting...' : 'Complete Quiz'}
         </Button>
       </QuizForm>
     </QuizContainer>
   );
-} 
+}

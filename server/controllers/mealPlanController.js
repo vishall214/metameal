@@ -134,30 +134,15 @@ const generateMealPlan = asyncHandler(async (req, res) => {
           fat: Math.round((targetCalories * 0.3) / 9)      // 30% from fat
         };
 
-        // Query meals matching user preferences and nutritional needs
+        // Query meals matching user filters (profile.filters)
         let meals = await Food.find({
           course: mealType.toLowerCase(),
           calories: {
             $gte: calorieRange.min,
             $lte: calorieRange.max
           },
-          // Filter by dietary restrictions
-          filter: {
-            $nin: profile.dietaryRestrictions || []
-          },
-          // Match macro nutrients within 20% range
-          protein: {
-            $gte: mealMacroTargets.protein * 0.8,
-            $lte: mealMacroTargets.protein * 1.2
-          },
-          carbs: {
-            $gte: mealMacroTargets.carbs * 0.8,
-            $lte: mealMacroTargets.carbs * 1.2
-          },
-          fats: {
-            $gte: mealMacroTargets.fat * 0.8,
-            $lte: mealMacroTargets.fat * 1.2
-          }
+          // Only include foods that match at least one user filter
+          filter: { $in: profile.filters && profile.filters.length > 0 ? profile.filters : [/.*/] }
         }).exec();
 
         // If no exact matches, relax constraints gradually
@@ -168,9 +153,7 @@ const generateMealPlan = asyncHandler(async (req, res) => {
               $gte: calorieRange.min * 0.8,
               $lte: calorieRange.max * 1.2
             },
-            filter: {
-              $nin: profile.dietaryRestrictions || []
-            }
+            filter: { $in: profile.filters && profile.filters.length > 0 ? profile.filters : [/.*/] }
           }).limit(3).exec();
         }
 
@@ -204,7 +187,6 @@ const generateMealPlan = asyncHandler(async (req, res) => {
         if (formattedMeals.length > 0) {
           // Select one meal randomly for this slot
           const selectedMealIndex = Math.floor(Math.random() * formattedMeals.length);
-          
           mealPlanItems.push({
             day,
             mealType,
@@ -364,4 +346,4 @@ module.exports = {
   generateMealPlan,
   getActiveMealPlan,
   updateMealSelection
-}; 
+};

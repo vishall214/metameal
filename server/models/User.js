@@ -40,19 +40,25 @@ const userSchema = new mongoose.Schema({
       type: String,
       enum: ['sedentary', 'light', 'moderate', 'active', 'very_active']
     },
-    dietaryRestrictions: [String],
-    allergies: [String],
+    // User's selected filters, must match Food.filter values exactly
+    filters: [{
+      type: String,
+      enum: ['veg', 'non-veg', 'diabetes', 'thyroid', 'high BP', 'breakfast', 'main course', 'dessert', 'snacks']
+    }],
     goals: [String]
   },
   preferences: {
     mealTypes: [String],
-    cuisineTypes: [String],
     calorieGoal: Number,
     proteinGoal: Number,
     carbGoal: Number,
     fatGoal: Number
   },
   isVerified: {
+    type: Boolean,
+    default: false
+  },
+  quizCompleted: {
     type: Boolean,
     default: false
   },

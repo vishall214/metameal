@@ -1,15 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { FaUtensils, FaChartLine, FaWeight, FaRunning, FaCalendarAlt, FaCheckCircle } from 'react-icons/fa';
+import { FaUtensils, FaWeight, FaCheckCircle } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-
-const PageContainer = styled.div`
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-`;
+import Sidebar from '../components/Sidebar';
+import MealCard from '../components/mealcard';
 
 const WelcomeSection = styled.div`
   margin-bottom: 2rem;
@@ -88,32 +84,6 @@ const MealGrid = styled.div`
   gap: 1rem;
 `;
 
-const MealCard = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 1rem;
-  border: 1px solid rgba(0, 181, 176, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-
-  h4 {
-    color: var(--text-light);
-    margin: 0;
-  }
-
-  p {
-    color: var(--text-light);
-    opacity: 0.8;
-    margin: 0;
-  }
-
-  input[type="checkbox"] {
-    margin-top: 0.5rem;
-    accent-color: var(--primary);
-  }
-`;
-
 const ProgressBar = styled.div`
   width: 100%;
   height: 8px;
@@ -167,6 +137,16 @@ const GoalItem = styled.div`
   }
 `;
 
+const DashboardWrapper = styled.div`
+  display: flex;
+`;
+
+const MainContent = styled.div`
+  flex: 1;
+  margin-left: 250px;
+  padding: 2rem 0;
+`;
+
 export default function Home() {
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState({
@@ -198,21 +178,6 @@ export default function Home() {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  const handleMealStatusUpdate = async (mealId, completed) => {
-    try {
-      await axios.put(`/api/dashboard/meals/${mealId}`, { completed }, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`
-        }
-      });
-      fetchDashboardData(); // Refresh dashboard data
-      toast.success('Meal status updated');
-    } catch (error) {
-      console.error('Error updating meal status:', error);
-      toast.error('Failed to update meal status');
-    }
-  };
-
   const handleGoalStatusUpdate = async (goalId, completed) => {
     try {
       await axios.put(`/api/dashboard/goals/${goalId}`, { completed }, {
@@ -233,70 +198,73 @@ export default function Home() {
   }
 
   return (
-    <PageContainer>
-      <WelcomeSection>
-        <Title>Welcome back, {user?.name}!</Title>
-        <Subtitle>Here's your daily progress</Subtitle>
-      </WelcomeSection>
+    <DashboardWrapper>
+      <Sidebar />
+      <MainContent>
+        <WelcomeSection>
+          <Title>Welcome back, {user?.name}!</Title>
+          <Subtitle>Here's your daily progress</Subtitle>
+        </WelcomeSection>
 
-      <DashboardGrid>
-        <Card>
-          <CardHeader>
-            <FaUtensils />
-            <CardTitle>Calories</CardTitle>
-          </CardHeader>
-          <StatValue>{dashboardData.calories.consumed} / {dashboardData.calories.goal} kcal</StatValue>
-          <ProgressBar>
-            <Progress progress={(dashboardData.calories.consumed / dashboardData.calories.goal) * 100} />
-          </ProgressBar>
-        </Card>
+        <DashboardGrid>
+          <Card>
+            <CardHeader>
+              <FaUtensils />
+              <CardTitle>Calories</CardTitle>
+            </CardHeader>
+            <StatValue>{dashboardData.calories.consumed} / {dashboardData.calories.goal} kcal</StatValue>
+            <ProgressBar>
+              <Progress progress={(dashboardData.calories.consumed / dashboardData.calories.goal) * 100} />
+            </ProgressBar>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <FaWeight />
-            <CardTitle>Weight Progress</CardTitle>
-          </CardHeader>
-          <StatValue>{dashboardData.weight.current} / {dashboardData.weight.goal} kg</StatValue>
-          <ProgressBar>
-            <Progress progress={(dashboardData.weight.current / dashboardData.weight.goal) * 100} />
-          </ProgressBar>
-        </Card>
-      </DashboardGrid>
+          <Card>
+            <CardHeader>
+              <FaWeight />
+              <CardTitle>Weight Progress</CardTitle>
+            </CardHeader>
+            <StatValue>{dashboardData.weight.current} / {dashboardData.weight.goal} kg</StatValue>
+            <ProgressBar>
+              <Progress progress={(dashboardData.weight.current / dashboardData.weight.goal) * 100} />
+            </ProgressBar>
+          </Card>
+        </DashboardGrid>
 
-      <MealSection>
-        <h2>Today's Meals</h2>
-        <MealGrid>
-          {dashboardData.meals.map((meal, index) => (
-            <MealCard key={index}>
-              <h4>{meal.name}</h4>
-              <p>{meal.time}</p>
-              <p>{meal.calories} kcal</p>
-              <input
-                type="checkbox"
-                checked={meal.completed}
-                onChange={() => handleMealStatusUpdate(meal._id, !meal.completed)}
+        <MealSection>
+          <h2>Today's Meals</h2>
+          <MealGrid>
+            {dashboardData.meals.map((meal, index) => (
+              <MealCard
+                key={meal._id || index}
+                image={meal.photo || meal.meal?.preview?.photo}
+                title={meal.name || meal.meal?.preview?.name}
+                description={meal.description || meal.meal?.details?.description}
+                prepTime={meal.cookingTime || meal.meal?.preview?.cookingTime}
+                servings={meal.portionSize || meal.meal?.details?.portionSize}
+                isFavorite={false}
+                onFavoriteClick={() => {}}
               />
-            </MealCard>
-          ))}
-        </MealGrid>
-      </MealSection>
+            ))}
+          </MealGrid>
+        </MealSection>
 
-      <Section>
-        <h2>Goals</h2>
-        <GoalList>
-          {dashboardData.goals.map((goal, index) => (
-            <GoalItem key={index} completed={goal.completed}>
-              <FaCheckCircle />
-              <span>{goal.text}</span>
-              <input
-                type="checkbox"
-                checked={goal.completed}
-                onChange={() => handleGoalStatusUpdate(goal._id, !goal.completed)}
-              />
-            </GoalItem>
-          ))}
-        </GoalList>
-      </Section>
-    </PageContainer>
+        <Section>
+          <h2>Goals</h2>
+          <GoalList>
+            {dashboardData.goals.map((goal, index) => (
+              <GoalItem key={index} completed={goal.completed}>
+                <FaCheckCircle />
+                <span>{goal.text}</span>
+                <input
+                  type="checkbox"
+                  checked={goal.completed}
+                  onChange={() => handleGoalStatusUpdate(goal._id, !goal.completed)}
+                />
+              </GoalItem>
+            ))}
+          </GoalList>
+        </Section>
+      </MainContent>
+    </DashboardWrapper>
   );
 }

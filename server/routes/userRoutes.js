@@ -1,11 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middlewares/auth');
+const { saveQuizAnswers } = require('../controllers/userController');
 
-// TODO: Import user controller functions once created
-// const { getProfile, updateProfile } = require('../controllers/userController');
-
-// Protected routes
+// Protect all routes below
 router.use(protect);
 
 // TODO: Add actual route handlers once controller is created
@@ -17,4 +15,7 @@ router.put('/profile', (req, res) => {
   res.json({ message: 'Update profile route' });
 });
 
-module.exports = router; 
+// Save quiz answers to user profile
+router.post('/quiz', saveQuizAnswers);
+
+module.exports = router;
