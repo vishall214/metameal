@@ -3,8 +3,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const config = require('./config/config');
 const connectDB = require('./config/database');
-const { errorHandler, notFound } = require('./middlewares/errorMiddleware');
-const mongoose = require('mongoose');
+const { errorHandler } = require('./middlewares/errorMiddleware');
 require('dotenv').config();
 
 
@@ -13,29 +12,20 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const mealRoutes = require('./routes/mealRoutes');
 const mealPlanRoutes = require('./routes/mealPlanRoutes');
-const consultationRoutes = require('./routes/consultationRoutes');
-const analyticsRoutes = require('./routes/analyticsRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
-const profileRoutes = require('./routes/profileRoutes');
+
 
 // Connect to MongoDB
 connectDB();
 
 const app = express();
 
-// Global middlewares
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(morgan('dev'));
+if (config.NODE_ENV === 'development') app.use(morgan('dev'));
 
-// Health check route
+// Health check
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok',
-    environment: config.NODE_ENV,
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
-  });
+  res.status(200).json({ status: 'ok' });
 });
 
 // API routes
@@ -43,34 +33,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/meals', mealRoutes);
 app.use('/api/meal-plans', mealPlanRoutes);
-app.use('/api/consultations', consultationRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/profile', profileRoutes);
 
 // Error Handling
-app.use(notFound);
 app.use(errorHandler);
 
-// Start server with port fallback
-const startServer = (port) => {
-  try {
-    const server = app.listen(port, () => {
-      console.log(`🚀 Server running on port ${port} in ${config.NODE_ENV} mode`);
-    });
-
-    server.on('error', (e) => {
-      if (e.code === 'EADDRINUSE') {
-        console.log(`Port ${port} is busy, trying ${port + 1}...`);
-        startServer(port + 1);
-      } else {
-        console.error('Server error:', e);
-      }
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
-};
-
-startServer(config.PORT);
+const PORT = config.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT} in ${config.NODE_ENV} mode`);
+});

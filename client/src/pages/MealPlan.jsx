@@ -1,21 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { FaFilter, FaHeart } from 'react-icons/fa';
-import { mealsAPI } from '../services/api';
+import { FaUtensils } from 'react-icons/fa';
+import { mealPlansAPI } from '../services/api';
 import MealCard from '../components/MealCard';
-import Button from '../components/Button';
+import { useAuth } from '../contexts/AuthContext';
 
 const PageContainer = styled.div`
   padding: 2rem;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
 `;
 
 const Title = styled.h1`
@@ -23,99 +16,80 @@ const Title = styled.h1`
   background: linear-gradient(to right, var(--primary), var(--primary-light));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  margin-bottom: 2rem;
 `;
 
-const ActionButtons = styled.div`
+const WeekContainer = styled.div`
   display: flex;
-  gap: 1rem;
-`;
-
-const SearchInput = styled.input`
-  padding: 0.75rem 1rem;
-  border: 1px solid rgba(0, 181, 176, 0.2);
-  border-radius: 8px;
-  background: rgba(0, 181, 176, 0.05);
-  color: var(--text-light);
-  width: 300px;
-  transition: all 0.3s ease;
-
-  &:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(0, 181, 176, 0.1);
-  }
-
-  &::placeholder {
-    color: var(--text-muted);
-  }
-`;
-
-const MealGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  flex-direction: column;
   gap: 2rem;
 `;
 
-const EmptyState = styled.div`
+const DayContainer = styled.div`
+  background: rgba(0, 181, 176, 0.05);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid rgba(0, 181, 176, 0.1);
+`;
+
+const DayHeader = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+const DayTitle = styled.h2`
+  color: var(--text-light);
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+`;
+
+const MealsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+`;
+
+const LoadingState = styled.div`
   text-align: center;
   padding: 3rem;
   color: var(--text-light);
   opacity: 0.8;
 `;
 
+const ErrorState = styled.div`
+  text-align: center;
+  padding: 3rem;
+  color: var(--error);
+`;
+
 const MealPlan = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [meals, setMeals] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [favorites, setFavorites] = useState({});
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-
-  const fetchMeals = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await mealsAPI.getAll();
-      setMeals(response.data);
-      setError('');
-    } catch (err) {
-      setError('Failed to load meals');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [weeklyMeals, setWeeklyMeals] = useState({});
+  const { user } = useAuth();
 
   useEffect(() => {
-    fetchMeals();
-  }, [fetchMeals]);
+    const fetchWeeklyMeals = async () => {
+      try {
+        setLoading(true);
+        const response = await mealPlansAPI.generate();
+        setWeeklyMeals(response.data);
+        setError('');
+      } catch (err) {
+        console.error('Error fetching weekly meals:', err);
+        setError('Failed to load meal plan');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const toggleFavorite = (mealId) => {
-    setFavorites(prev => ({
-      ...prev,
-      [mealId]: !prev[mealId]
-    }));
-  };
-
-  const toggleFavoritesFilter = () => {
-    setShowFavoritesOnly(!showFavoritesOnly);
-  };
-
-  const filteredMeals = meals.filter(meal => {
-    const matchesSearch = meal.name.toLowerCase().includes(searchTerm.toLowerCase());
-    if (showFavoritesOnly) {
-      return matchesSearch && favorites[meal._id];
-    }
-    return matchesSearch;
-  });
+    fetchWeeklyMeals();
+  }, []);
 
   if (loading) {
     return (
       <PageContainer>
-        <Title>Meal Plan</Title>
-        <EmptyState>Loading meals...</EmptyState>
+        <Title>Weekly Meal Plan</Title>
+        <LoadingState>Loading your meal plan...</LoadingState>
       </PageContainer>
     );
   }
@@ -123,58 +97,31 @@ const MealPlan = () => {
   if (error) {
     return (
       <PageContainer>
-        <Title>Meal Plan</Title>
-        <EmptyState style={{ color: 'var(--error)' }}>{error}</EmptyState>
+        <Title>Weekly Meal Plan</Title>
+        <ErrorState>{error}</ErrorState>
       </PageContainer>
     );
   }
 
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
   return (
     <PageContainer>
-      <Header>
-        <Title>Meal Plan</Title>
-        <ActionButtons>
-          <SearchInput
-            type="text"
-            placeholder="Search meals..."
-            value={searchTerm}
-            onChange={handleSearch}
-          />
-          <Button variant="outline">
-            <FaFilter /> Filter
-          </Button>
-          <Button 
-            variant={showFavoritesOnly ? "primary" : "outline"}
-            onClick={toggleFavoritesFilter}
-          >
-            <FaHeart /> Favorites
-          </Button>
-        </ActionButtons>
-      </Header>
-
-      {filteredMeals.length === 0 ? (
-        <EmptyState>
-          {searchTerm || showFavoritesOnly ? 
-            "No meals found matching your criteria" : 
-            "No meals available. Try adding some meals to your plan!"
-          }
-        </EmptyState>
-      ) : (
-        <MealGrid>
-          {filteredMeals.map(meal => (
-            <MealCard
-              key={meal._id}
-              image={meal.photo}
-              title={meal.name}
-              description={meal.description}
-              prepTime={meal.cookingTime}
-              servings={`${meal.portionSize}g`}
-              isFavorite={favorites[meal._id]}
-              onFavoriteClick={() => toggleFavorite(meal._id)}
-            />
-          ))}
-        </MealGrid>
-      )}
+      <Title>Weekly Meal Plan</Title>
+      <WeekContainer>
+        {days.map(day => (
+          <DayContainer key={day}>
+            <DayHeader>
+              <DayTitle>{day}</DayTitle>
+            </DayHeader>
+            <MealsGrid>
+              {weeklyMeals[day.toLowerCase()]?.map(meal => (
+                <MealCard key={meal._id} meal={meal} />
+              ))}
+            </MealsGrid>
+          </DayContainer>
+        ))}
+      </WeekContainer>
     </PageContainer>
   );
 };

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { FaUtensils, FaChartLine, FaWeight, FaRunning, FaCalendarAlt, FaCheckCircle } from 'react-icons/fa';
+import { FaUtensils,FaWeight,FaCheckCircle } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import MealCard from '../components/MealCard';
 
 const PageContainer = styled.div`
   padding: 2rem;
@@ -33,6 +34,9 @@ const Section = styled.div`
     color: var(--text-light);
     margin-bottom: 1rem;
     font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 `;
 
@@ -84,34 +88,8 @@ const MealSection = styled(Section)`
 
 const MealGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-`;
-
-const MealCard = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 1rem;
-  border: 1px solid rgba(0, 181, 176, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-
-  h4 {
-    color: var(--text-light);
-    margin: 0;
-  }
-
-  p {
-    color: var(--text-light);
-    opacity: 0.8;
-    margin: 0;
-  }
-
-  input[type="checkbox"] {
-    margin-top: 0.5rem;
-    accent-color: var(--primary);
-  }
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
 `;
 
 const ProgressBar = styled.div`
@@ -165,6 +143,13 @@ const GoalItem = styled.div`
   input[type="checkbox"] {
     accent-color: var(--primary);
   }
+`;
+
+const LoadingState = styled.div`
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-light);
+  opacity: 0.8;
 `;
 
 export default function Home() {
@@ -229,7 +214,15 @@ export default function Home() {
   };
 
   if (loading) {
-    return <div>Loading dashboard...</div>;
+    return (
+      <PageContainer>
+        <WelcomeSection>
+          <Title>Welcome back, {user?.name}!</Title>
+          <Subtitle>Loading your dashboard...</Subtitle>
+        </WelcomeSection>
+        <LoadingState>Loading...</LoadingState>
+      </PageContainer>
+    );
   }
 
   return (
@@ -264,19 +257,13 @@ export default function Home() {
       </DashboardGrid>
 
       <MealSection>
-        <h2>Today's Meals</h2>
+        <h2>
+          <FaUtensils />
+          Today's Meals
+        </h2>
         <MealGrid>
-          {dashboardData.meals.map((meal, index) => (
-            <MealCard key={index}>
-              <h4>{meal.name}</h4>
-              <p>{meal.time}</p>
-              <p>{meal.calories} kcal</p>
-              <input
-                type="checkbox"
-                checked={meal.completed}
-                onChange={() => handleMealStatusUpdate(meal._id, !meal.completed)}
-              />
-            </MealCard>
+          {dashboardData.meals.map(meal => (
+            <MealCard key={meal._id} meal={meal} />
           ))}
         </MealGrid>
       </MealSection>

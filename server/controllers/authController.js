@@ -55,14 +55,25 @@ const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
+    // Create user with empty profile
     console.log('Creating new user in User collection...');
     const user = await User.create({
       username: normalizedUsername,
       email: normalizedEmail,
       name: name.trim(),
       password: hashedPassword,
-      isVerified: true // You might want to set this to false if you implement email verification
+      isVerified: true,
+      profile: {
+        healthConditions: {
+          diabetes: false,
+          highBloodPressure: false,
+          thyroid: false,
+          other: []
+        },
+        fitnessGoals: [],
+        dietaryPreferences: ['none']
+      },
+      quizCompleted: false
     });
 
     // Generate token
@@ -74,7 +85,8 @@ const register = async (req, res) => {
       username: user.username,
       email: user.email,
       name: user.name,
-      role: user.role
+      role: user.role,
+      quizCompleted: user.quizCompleted
     };
 
     console.log('Registration successful for:', normalizedEmail);

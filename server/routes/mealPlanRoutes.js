@@ -9,10 +9,12 @@ const {
   deleteMealPlan,
   generateMealPlan,
   getActiveMealPlan,
-  updateMealSelection
+  updateMealSelection,
+  getWeeklyMealPlan,
+  getTodaysMeals
 } = require('../controllers/mealPlanController');
 
-// All routes are protected
+// Apply authentication middleware to all routes
 router.use(protect);
 
 // Base routes
@@ -29,5 +31,11 @@ router.route('/:id')
 router.post('/generate', generateMealPlan);
 router.get('/active', getActiveMealPlan);
 router.put('/:id/meal', updateMealSelection);
+
+// Get weekly meal plan
+router.get('/weekly', getWeeklyMealPlan);
+
+// Get today's meals
+router.get('/today', getTodaysMeals);
 
 module.exports = router; 

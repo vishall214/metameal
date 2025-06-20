@@ -29,28 +29,77 @@ const userSchema = new mongoose.Schema({
     default: 'user'
   },
   profile: {
-    age: Number,
-    height: Number,
-    weight: Number,
+    age: {
+      type: Number,
+      required: false
+    },
+    height: {
+      type: Number,
+      required: false
+    },
+    weight: {
+      type: Number,
+      required: false
+    },
     gender: {
       type: String,
-      enum: ['male', 'female', 'other']
+      enum: ['male', 'female', 'other'],
+      required: false
     },
     activityLevel: {
       type: String,
-      enum: ['sedentary', 'light', 'moderate', 'active', 'very_active']
+      enum: [
+        'sedentary',
+        'lightly_active',
+        'moderately_active',
+        'very_active',
+        'extra_active'
+      ],
+      required: false
     },
-    dietaryRestrictions: [String],
-    allergies: [String],
-    goals: [String]
+    healthConditions: {
+      diabetes: { type: Boolean, default: false },
+      highBloodPressure: { type: Boolean, default: false },
+      thyroid: { type: Boolean, default: false },
+      other: [String]
+    },
+    fitnessGoals: {
+      type: [String],
+      enum: [
+        'weight_loss',
+        'muscle_gain',
+        'maintenance',
+        'improved_energy',
+        'better_sleep',
+        'sports_performance'
+      ],
+      required: false
+    },
+    dietaryPreferences: {
+      type: [String],
+      enum: [
+        'vegetarian',
+        'vegan',
+        'pescatarian',
+        'gluten_free',
+        'dairy_free',
+        'none'
+      ],
+      default: ['none']
+    }
   },
   preferences: {
-    mealTypes: [String],
-    cuisineTypes: [String],
     calorieGoal: Number,
     proteinGoal: Number,
     carbGoal: Number,
     fatGoal: Number
+  },
+  quizCompleted: {
+    type: Boolean,
+    default: false
+  },
+  lastQuizDate: {
+    type: Date
   },
   isVerified: {
     type: Boolean,

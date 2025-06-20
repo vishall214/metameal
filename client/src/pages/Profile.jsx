@@ -3,7 +3,8 @@ import styled from 'styled-components';
 import { FaUser, FaWeight } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
-import api from '../services/api';
+import api, { profileAPI } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const PageContainer = styled.div`
   padding: 2rem;
@@ -158,8 +159,35 @@ const Button = styled.button`
   }
 `;
 
+const Select = styled.select`
+  padding: 0.75rem;
+  border: 1px solid rgba(0, 181, 176, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(0, 181, 176, 0.2);
+  }
+`;
+
+const ErrorMessage = styled.p`
+  color: #ff6b6b;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+`;
+
+const RequiredField = styled.span`
+  color: #ff6b6b;
+  margin-left: 4px;
+`;
+
 export default function Profile() {
   const { user, updateProfile } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -183,15 +211,23 @@ export default function Profile() {
     }
   });
   const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState({});
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await api.get('/users/profile');
+        const response = await profileAPI.getProfile();
         const userData = response.data;
+        
+        if (!userData) {
+          toast.error('No profile data found');
+          return;
+        }
+
         setFormData({
-          name: userData.name || '',
-          email: userData.email || '',
+          name: user?.name || '',
+          email: user?.email || '',
           profile: {
             height: userData.profile?.height || '',
             weight: userData.profile?.weight || '',
@@ -211,16 +247,83 @@ export default function Profile() {
             fatGoal: userData.preferences?.fatGoal || ''
           }
         });
-        setLoading(false);
+
+        // Check if essential profile fields are filled
+        const hasRequiredFields = 
+          userData.profile?.height &&
+          userData.profile?.weight &&
+          userData.profile?.age &&
+          userData.profile?.gender &&
+          userData.profile?.activityLevel;
+
+        setIsProfileComplete(hasRequiredFields);
+
       } catch (error) {
         console.error('Error fetching profile:', error);
-        toast.error('Failed to load profile data');
+        toast.error(error.response?.data?.message || 'Failed to fetch profile data');
+      } finally {
         setLoading(false);
       }
     };
 
     fetchUserProfile();
-  }, []);
+  }, [user]);
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    // Required fields validation
+    if (!formData.profile.height) newErrors.height = 'Height is required';
+    if (!formData.profile.weight) newErrors.weight = 'Weight is required';
+    if (!formData.profile.age) newErrors.age = 'Age is required';
+    if (!formData.profile.gender) newErrors.gender = 'Gender is required';
+    if (!formData.profile.activityLevel) newErrors.activityLevel = 'Activity level is required';
+
+    // Numeric validation
+    if (formData.profile.height && (isNaN(formData.profile.height) || formData.profile.height <= 0)) {
+      newErrors.height = 'Please enter a valid height';
+    }
+    if (formData.profile.weight && (isNaN(formData.profile.weight) || formData.profile.weight <= 0)) {
+      newErrors.weight = 'Please enter a valid weight';
+    }
+    if (formData.profile.age && (isNaN(formData.profile.age) || formData.profile.age <= 0)) {
+      newErrors.age = 'Please enter a valid age';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields correctly');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await profileAPI.updateProfile({
+        ...formData.profile
+      });
+
+      if (response.data) {
+        toast.success('Profile updated successfully');
+        setIsProfileComplete(true);
+
+        // If this was initial profile setup, redirect to meal plan generation
+        if (!isProfileComplete) {
+          navigate('/meal-plan');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error(error.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -241,105 +344,92 @@ export default function Profile() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await api.put('/users/profile', formData);
-      if (response.data.success) {
-        toast.success('Profile updated successfully');
-        // Update auth context with new user data
-        updateProfile(response.data.user);
-      }
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error(error.response?.data?.error || 'Failed to update profile');
-    }
-  };
-
   if (loading) {
-    return <div>Loading profile...</div>;
+    return <div>Loading...</div>;
   }
 
   return (
     <PageContainer>
-      <Title>Profile Settings</Title>
-
+      <Title>
+        {isProfileComplete ? 'Update Your Profile' : 'Complete Your Profile'}
+      </Title>
       <ProfileGrid>
-        <ProfileSidebar>
-          <ProfileImage image={user?.profile?.avatar || "/default-avatar.jpg"} />
-          <ProfileName>{formData.name}</ProfileName>
-          <ProfileEmail>{formData.email}</ProfileEmail>
-
-          <ProfileStats>
-            <Stat>
-              <h4>Height</h4>
-              <p>{formData.profile.height} cm</p>
-            </Stat>
-            <Stat>
-              <h4>Weight</h4>
-              <p>{formData.profile.weight} kg</p>
-            </Stat>
-          </ProfileStats>
-        </ProfileSidebar>
-
         <ProfileContent>
           <Form onSubmit={handleSubmit}>
             <Section>
-              <h3><FaUser /> Personal Information</h3>
+              <h3><FaUser /> Basic Information</h3>
               <FormGroup>
-                <Label>Full Name</Label>
-                <Input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
-              </FormGroup>
-              <FormGroup>
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </FormGroup>
-            </Section>
-
-            <Section>
-              <h3><FaWeight /> Physical Information</h3>
-              <FormGroup>
-                <Label>Height (cm)</Label>
+                <Label>Height (cm)<RequiredField>*</RequiredField></Label>
                 <Input
                   type="number"
                   name="profile.height"
                   value={formData.profile.height}
                   onChange={handleChange}
+                  placeholder="Enter your height in centimeters"
                 />
+                {errors.height && <ErrorMessage>{errors.height}</ErrorMessage>}
               </FormGroup>
+
               <FormGroup>
-                <Label>Weight (kg)</Label>
+                <Label>Weight (kg)<RequiredField>*</RequiredField></Label>
                 <Input
                   type="number"
                   name="profile.weight"
                   value={formData.profile.weight}
                   onChange={handleChange}
+                  placeholder="Enter your weight in kilograms"
                 />
+                {errors.weight && <ErrorMessage>{errors.weight}</ErrorMessage>}
               </FormGroup>
+
               <FormGroup>
-                <Label>Age</Label>
+                <Label>Age<RequiredField>*</RequiredField></Label>
                 <Input
                   type="number"
                   name="profile.age"
                   value={formData.profile.age}
                   onChange={handleChange}
+                  placeholder="Enter your age"
                 />
+                {errors.age && <ErrorMessage>{errors.age}</ErrorMessage>}
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Gender<RequiredField>*</RequiredField></Label>
+                <Select
+                  name="profile.gender"
+                  value={formData.profile.gender}
+                  onChange={handleChange}
+                >
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </Select>
+                {errors.gender && <ErrorMessage>{errors.gender}</ErrorMessage>}
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Activity Level<RequiredField>*</RequiredField></Label>
+                <Select
+                  name="profile.activityLevel"
+                  value={formData.profile.activityLevel}
+                  onChange={handleChange}
+                >
+                  <option value="">Select activity level</option>
+                  <option value="sedentary">Sedentary (little or no exercise)</option>
+                  <option value="light">Light (exercise 1-3 times/week)</option>
+                  <option value="moderate">Moderate (exercise 4-5 times/week)</option>
+                  <option value="active">Active (daily exercise)</option>
+                  <option value="very_active">Very Active (intense exercise 6-7 times/week)</option>
+                </Select>
+                {errors.activityLevel && <ErrorMessage>{errors.activityLevel}</ErrorMessage>}
               </FormGroup>
             </Section>
 
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Saving...' : (isProfileComplete ? 'Update Profile' : 'Complete Profile')}
+            </Button>
           </Form>
         </ProfileContent>
       </ProfileGrid>
