@@ -2,7 +2,7 @@ import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import Button from '../components/Button';
 import { FaUtensils, FaBrain, FaChartLine, FaUsers } from 'react-icons/fa';
-import Navbar from '../components/Navbar';
+import Navbar from '../components/navbar';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px);}
