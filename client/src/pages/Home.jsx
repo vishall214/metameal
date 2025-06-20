@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { FaUtensils,FaWeight,FaCheckCircle } from 'react-icons/fa';
+import { FaUtensils, FaWeight, FaCheckCircle } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
 import { toast } from 'react-toastify';
+import { dashboardAPI } from '../services/api';
 import MealCard from '../components/MealCard';
 
 const PageContainer = styled.div`
@@ -102,7 +102,7 @@ const ProgressBar = styled.div`
 `;
 
 const Progress = styled.div`
-  width: ${props => props.progress}%;
+  width: ${props => Math.min(props.progress, 100)}%;
   height: 100%;
   background: linear-gradient(to right, var(--primary), var(--primary-light));
   transition: width 0.3s ease;
@@ -152,6 +152,15 @@ const LoadingState = styled.div`
   opacity: 0.8;
 `;
 
+const ErrorState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: var(--error);
+  background: rgba(244, 67, 54, 0.1);
+  border-radius: 8px;
+  margin: 1rem 0;
+`;
+
 export default function Home() {
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState({
@@ -162,22 +171,40 @@ export default function Home() {
     goals: []
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      const response = await axios.get('/api/dashboard', {
-        headers: {
-          Authorization: `Bearer ${user?.token}`
-        }
-      });
-      setDashboardData(response.data);
-      setLoading(false);
+      setLoading(true);
+      setError(null);
+      
+      const response = await dashboardAPI.getDashboard();
+      
+      if (response.data) {
+        setDashboardData(response.data);
+      } else {
+        throw new Error('No dashboard data received');
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to load dashboard data');
+      setError(error.response?.data?.message || error.message || 'Failed to load dashboard data');
+      
+      // Set default data on error
+      setDashboardData({
+        calories: { consumed: 0, goal: 2000 },
+        water: { consumed: 0, goal: 2.5 },
+        weight: { current: 0, goal: 0 },
+        meals: [],
+        goals: [
+          { _id: '1', text: 'Complete daily water intake', completed: false },
+          { _id: '2', text: 'Track all meals', completed: false },
+          { _id: '3', text: 'Exercise for 30 minutes', completed: false }
+        ]
+      });
+    } finally {
       setLoading(false);
     }
-  }, [user?.token]);
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();
@@ -185,12 +212,8 @@ export default function Home() {
 
   const handleMealStatusUpdate = async (mealId, completed) => {
     try {
-      await axios.put(`/api/dashboard/meals/${mealId}`, { completed }, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`
-        }
-      });
-      fetchDashboardData(); // Refresh dashboard data
+      await dashboardAPI.updateMealStatus(mealId, { completed });
+      await fetchDashboardData(); // Refresh dashboard data
       toast.success('Meal status updated');
     } catch (error) {
       console.error('Error updating meal status:', error);
@@ -200,12 +223,8 @@ export default function Home() {
 
   const handleGoalStatusUpdate = async (goalId, completed) => {
     try {
-      await axios.put(`/api/dashboard/goals/${goalId}`, { completed }, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`
-        }
-      });
-      fetchDashboardData(); // Refresh dashboard data
+      await dashboardAPI.updateGoalStatus(goalId, { completed });
+      await fetchDashboardData(); // Refresh dashboard data
       toast.success('Goal status updated');
     } catch (error) {
       console.error('Error updating goal status:', error);
@@ -232,13 +251,35 @@ export default function Home() {
         <Subtitle>Here's your daily progress</Subtitle>
       </WelcomeSection>
 
+      {error && (
+        <ErrorState>
+          <p>⚠️ {error}</p>
+          <button 
+            onClick={fetchDashboardData}
+            style={{
+              background: 'var(--primary)',
+              color: 'white',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '4px',
+              marginTop: '1rem',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
+        </ErrorState>
+      )}
+
       <DashboardGrid>
         <Card>
           <CardHeader>
             <FaUtensils />
             <CardTitle>Calories</CardTitle>
           </CardHeader>
-          <StatValue>{dashboardData.calories.consumed} / {dashboardData.calories.goal} kcal</StatValue>
+          <StatValue>
+            {dashboardData.calories.consumed} / {dashboardData.calories.goal} kcal
+          </StatValue>
           <ProgressBar>
             <Progress progress={(dashboardData.calories.consumed / dashboardData.calories.goal) * 100} />
           </ProgressBar>
@@ -249,9 +290,11 @@ export default function Home() {
             <FaWeight />
             <CardTitle>Weight Progress</CardTitle>
           </CardHeader>
-          <StatValue>{dashboardData.weight.current} / {dashboardData.weight.goal} kg</StatValue>
+          <StatValue>
+            {dashboardData.weight.current} / {dashboardData.weight.goal} kg
+          </StatValue>
           <ProgressBar>
-            <Progress progress={(dashboardData.weight.current / dashboardData.weight.goal) * 100} />
+            <Progress progress={dashboardData.weight.goal ? (dashboardData.weight.current / dashboardData.weight.goal) * 100 : 0} />
           </ProgressBar>
         </Card>
       </DashboardGrid>
@@ -261,27 +304,43 @@ export default function Home() {
           <FaUtensils />
           Today's Meals
         </h2>
-        <MealGrid>
-          {dashboardData.meals.map(meal => (
-            <MealCard key={meal._id} meal={meal} />
-          ))}
-        </MealGrid>
+        {dashboardData.meals && dashboardData.meals.length > 0 ? (
+          <MealGrid>
+            {dashboardData.meals.map(meal => (
+              <MealCard key={meal._id || meal.id} meal={meal} />
+            ))}
+          </MealGrid>
+        ) : (
+          <Card>
+            <p style={{ color: 'var(--text-light)', opacity: 0.8, textAlign: 'center' }}>
+              No meals planned for today. Visit the <a href="/meal-plan" style={{ color: 'var(--primary)' }}>Meal Plan</a> page to generate your personalized meal plan.
+            </p>
+          </Card>
+        )}
       </MealSection>
 
       <Section>
         <h2>Goals</h2>
         <GoalList>
-          {dashboardData.goals.map((goal, index) => (
-            <GoalItem key={index} completed={goal.completed}>
-              <FaCheckCircle />
-              <span>{goal.text}</span>
-              <input
-                type="checkbox"
-                checked={goal.completed}
-                onChange={() => handleGoalStatusUpdate(goal._id, !goal.completed)}
-              />
-            </GoalItem>
-          ))}
+          {dashboardData.goals && dashboardData.goals.length > 0 ? (
+            dashboardData.goals.map((goal, index) => (
+              <GoalItem key={goal._id || index} completed={goal.completed}>
+                <FaCheckCircle />
+                <span>{goal.text}</span>
+                <input
+                  type="checkbox"
+                  checked={goal.completed}
+                  onChange={() => handleGoalStatusUpdate(goal._id, !goal.completed)}
+                />
+              </GoalItem>
+            ))
+          ) : (
+            <Card>
+              <p style={{ color: 'var(--text-light)', opacity: 0.8, textAlign: 'center' }}>
+                No goals set. Complete your profile to get personalized goals.
+              </p>
+            </Card>
+          )}
         </GoalList>
       </Section>
     </PageContainer>
