@@ -1,62 +1,253 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import { Link } from 'react-router-dom';
 
-const StyledButton = styled.button`
-  padding: 0.75rem 1.5rem;
-  background: ${props => {
-    if (props.variant === 'primary') return 'var(--primary)';
-    if (props.variant === 'secondary') return 'var(--secondary)';
-    return 'transparent';
-  }};
-  color: ${props => {
-    if (props.variant === 'primary' || props.variant === 'secondary') return 'var(--bg-dark)';
-    return 'var(--text-light)';
-  }};
-  border: 1px solid ${props => {
-    if (props.variant === 'primary') return 'var(--primary)';
-    if (props.variant === 'secondary') return 'var(--secondary)';
-    return 'var(--primary)';
-  }};
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  text-decoration: none;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0, 181, 176, 0.1);
-    background: ${props => {
-      if (props.variant === 'primary') return 'var(--primary-light)';
-      if (props.variant === 'secondary') return 'var(--secondary-light)';
-      return 'rgba(0, 181, 176, 0.1)';
-    }};
+const ripple = keyframes`
+  0% {
+    transform: scale(0);
+    opacity: 1;
   }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
+  100% {
+    transform: scale(4);
+    opacity: 0;
   }
 `;
 
-const Button = ({ children, to, variant = 'primary', ...props }) => {
+const getButtonStyles = (variant, size) => css`
+  /* Base Styles */
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+  overflow: hidden;
+  user-select: none;
+  
+  /* Size Variants */
+  ${size === 'sm' && css`
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: var(--radius-sm);
+  `}
+  
+  ${size === 'md' && css`
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  `}
+  
+  ${size === 'lg' && css`
+    padding: 1rem 2rem;
+    font-size: 1.125rem;
+    border-radius: var(--radius-md);
+  `}
+  
+  /* Primary Variant */
+  ${variant === 'primary' && css`
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: var(--shadow);
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg), var(--primary-glow);
+      filter: brightness(1.1);
+    }
+    
+    &:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: var(--shadow);
+    }
+  `}
+  
+  /* Secondary Variant */
+  ${variant === 'secondary' && css`
+    background: var(--accent-gradient);
+    color: white;
+    box-shadow: var(--shadow);
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      filter: brightness(1.1);
+    }
+    
+    &:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: var(--shadow);
+    }
+  `}
+  
+  /* Outline Variant */
+  ${variant === 'outline' && css`
+    background: transparent;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    backdrop-filter: blur(10px);
+    
+    &:hover:not(:disabled) {
+      background: rgba(0, 181, 176, 0.1);
+      border-color: var(--primary-light);
+      color: var(--primary-light);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    &:active:not(:disabled) {
+      transform: translateY(0);
+      background: rgba(0, 181, 176, 0.2);
+    }
+  `}
+  
+  /* Ghost Variant */
+  ${variant === 'ghost' && css`
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      transform: translateY(-1px);
+    }
+    
+    &:active:not(:disabled) {
+      transform: translateY(0);
+      background: rgba(255, 255, 255, 0.1);
+    }
+  `}
+  
+  /* Glass Variant */
+  ${variant === 'glass' && css`
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+    
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    &:active:not(:disabled) {
+      transform: translateY(0);
+      background: rgba(255, 255, 255, 0.15);
+    }
+  `}
+  
+  /* Focus Styles */
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  
+  /* Disabled Styles */
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+  
+  /* Loading State */
+  ${props => props.loading && css`
+    color: transparent;
+    pointer-events: none;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      margin: auto;
+      border: 2px solid transparent;
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 1s ease infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `}
+  
+  /* Ripple Effect */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+  
+  &:active:not(:disabled)::before {
+    width: 300px;
+    height: 300px;
+    animation: ${ripple} 0.6s ease-out;
+  }
+`;
+
+const StyledButton = styled.button`
+  ${props => getButtonStyles(props.variant, props.size)}
+`;
+
+const StyledLink = styled(Link)`
+  ${props => getButtonStyles(props.variant, props.size)}
+`;
+
+const Button = ({ 
+  children, 
+  to, 
+  variant = 'primary',
+  size = 'md',
+  loading = false,
+  icon,
+  ...props 
+}) => {
+  const content = (
+    <>
+      {icon && !loading && <span>{icon}</span>}
+      {!loading && children}
+    </>
+  );
+
   if (to) {
     return (
-      <StyledButton as={Link} to={to} variant={variant} {...props}>
-        {children}
-      </StyledButton>
+      <StyledLink 
+        to={to} 
+        variant={variant} 
+        size={size}
+        loading={loading}
+        {...props}
+      >
+        {content}
+      </StyledLink>
     );
   }
 
   return (
-    <StyledButton variant={variant} {...props}>
-      {children}
+    <StyledButton 
+      variant={variant} 
+      size={size}
+      loading={loading}
+      {...props}
+    >
+      {content}
     </StyledButton>
   );
 };

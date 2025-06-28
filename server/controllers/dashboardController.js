@@ -1,5 +1,5 @@
-const Dashboard = require('../models/Dashboard');
 const User = require('../models/User');
+const MealPlan = require('../models/MealPlan');
 const asyncHandler = require('express-async-handler');
 
 // @desc    Get user's dashboard data
@@ -7,33 +7,81 @@ const asyncHandler = require('express-async-handler');
 // @access  Private
 const getDashboard = asyncHandler(async (req, res) => {
   try {
-    let dashboard = await Dashboard.findOne({ user: req.user.id });
+    const user = await User.findById(req.user.id);
+    const mealPlans = await MealPlan.find({ user: req.user.id }).sort({ createdAt: -1 }).limit(1);
+    
+    // Get today's day name
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const today = days[new Date().getDay()];
+    
+    let todayMeals = [];
+    let totalCalories = 0;
+    let totalProtein = 0;
+    let totalCarbs = 0;
+    let totalFats = 0;
 
-    // If no dashboard exists, create one with default values
-    if (!dashboard) {
-      const user = await User.findById(req.user.id);
-      dashboard = await Dashboard.create({
-        user: req.user.id,
-        calories: {
-          consumed: 0,
-          goal: user.preferences?.calorieGoal || 2000
-        },
-        water: {
-          consumed: 0,
-          goal: 2.5
-        },
-        weight: {
-          current: user.profile?.weight || 0,
-          goal: user.profile?.goals?.includes('weight_loss') ? user.profile.weight - 5 : user.profile?.weight || 0
-        },
-        meals: [],
-        goals: [
-          { text: 'Complete daily water intake', completed: false },
-          { text: 'Track all meals', completed: false },
-          { text: 'Exercise for 30 minutes', completed: false }
-        ]
+    if (mealPlans.length > 0) {
+      const currentPlan = mealPlans[0];
+      todayMeals = (currentPlan.meals || []).filter(meal => meal.day === today);
+      
+      // Calculate nutrition totals for today
+      todayMeals.forEach(mealItem => {
+        const meal = mealItem.meal;
+        if (meal) {
+          totalCalories += Number(meal.calories) || 0;
+          totalProtein += Number(meal.protein) || 0;
+          totalCarbs += Number(meal.carbs) || 0;
+          totalFats += Number(meal.fats) || 0;
+        }
       });
     }
+
+    const dashboard = {
+      user: {
+        name: user.name,
+        email: user.email
+      },
+      calories: {
+        consumed: totalCalories,
+        goal: user.profile?.calorieGoal || 2000
+      },
+      protein: {
+        consumed: totalProtein,
+        goal: user.profile?.proteinGoal || 120
+      },
+      carbs: {
+        consumed: totalCarbs,
+        goal: user.profile?.carbGoal || 250
+      },
+      fats: {
+        consumed: totalFats,
+        goal: user.profile?.fatGoal || 65
+      },
+      todayMeals: todayMeals,
+      totalMealsPlanned: mealPlans.length > 0 ? mealPlans[0].meals?.length || 0 : 0,
+      goals: [
+        { 
+          id: 'breakfast',
+          text: 'Eat breakfast', 
+          completed: todayMeals.some(meal => meal.mealType === 'breakfast')
+        },
+        { 
+          id: 'lunch',
+          text: 'Eat lunch', 
+          completed: todayMeals.some(meal => meal.mealType === 'lunch')
+        },
+        { 
+          id: 'dinner',
+          text: 'Eat dinner', 
+          completed: todayMeals.some(meal => meal.mealType === 'dinner')
+        },
+        { 
+          id: 'water',
+          text: 'Drink 8 glasses of water', 
+          completed: false 
+        }
+      ]
+    };
 
     res.json(dashboard);
   } catch (error) {
