@@ -15,7 +15,7 @@ import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Home from './pages/Home';
+import Home from './pages/Home_new';
 import MealPlan from './pages/MealPlan';
 import Quiz from './pages/Quiz';
 import About from './pages/About';
@@ -23,7 +23,6 @@ import Consultation from './pages/Consultation';
 import Analytics from './pages/Analytics';
 import NutritionInfo from './pages/NutritionInfo';
 import Profile from './pages/Profile';
-import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 
 // Protected Route Component
@@ -37,17 +36,13 @@ const ProtectedRoute = ({ children }) => {
   return <Layout>{children}</Layout>;
 };
 
-// Public Route Component (redirects to home if already logged in)
+// Public Route Component (always shows children, even if logged in)
 const PublicRoute = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   
   // Wait for auth state to be determined
   if (loading) {
     return <div>Loading...</div>;
-  }
-  
-  if (user) {
-    return <Navigate to="/home" replace />;
   }
   
   return <Layout isPublic>{children}</Layout>;
@@ -127,11 +122,6 @@ function App() {
                   <NutritionInfo />
                 </ProtectedRoute>
               } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } />
 
               {/* 404 Route */}
               <Route path="*" element={<NotFound />} />
@@ -143,4 +133,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

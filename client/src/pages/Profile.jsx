@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { FaUser, FaWeight } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
+import BackButton from '../components/BackButton';
 import api from '../services/api';
 
 const PageContainer = styled.div`
@@ -159,7 +160,7 @@ const Button = styled.button`
 `;
 
 export default function Profile() {
-  const { user, updateProfile } = useAuth();
+  const { updateProfile } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -171,7 +172,9 @@ export default function Profile() {
       activityLevel: '',
       dietaryRestrictions: [],
       allergies: [],
-      goals: []
+      goals: [],
+      healthConditions: [],
+      avatar: ''
     },
     preferences: {
       mealTypes: [],
@@ -187,20 +190,22 @@ export default function Profile() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await api.get('/users/profile');
-        const userData = response.data;
+        const response = await api.get('/profile');
+        const userData = response.data.profile ? { ...response.data, ...response.data.profile } : response.data;
         setFormData({
           name: userData.name || '',
           email: userData.email || '',
           profile: {
-            height: userData.profile?.height || '',
-            weight: userData.profile?.weight || '',
-            age: userData.profile?.age || '',
-            gender: userData.profile?.gender || '',
-            activityLevel: userData.profile?.activityLevel || '',
-            dietaryRestrictions: userData.profile?.dietaryRestrictions || [],
-            allergies: userData.profile?.allergies || [],
-            goals: userData.profile?.goals || []
+            height: userData.height || userData.profile?.height || '',
+            weight: userData.weight || userData.profile?.weight || '',
+            age: userData.age || userData.profile?.age || '',
+            gender: userData.gender || userData.profile?.gender || '',
+            activityLevel: userData.activityLevel || userData.profile?.activityLevel || '',
+            dietaryRestrictions: userData.dietaryRestrictions || userData.profile?.dietaryRestrictions || [],
+            allergies: userData.allergies || userData.profile?.allergies || [],
+            goals: userData.goals || userData.profile?.goals || [],
+            healthConditions: userData.healthConditions || userData.profile?.healthConditions || [],
+            avatar: userData.avatar || userData.profile?.avatar || ''
           },
           preferences: {
             mealTypes: userData.preferences?.mealTypes || [],
@@ -223,14 +228,14 @@ export default function Profile() {
   }, []);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
     if (name.includes('.')) {
       const [section, field] = name.split('.');
       setFormData(prev => ({
         ...prev,
         [section]: {
           ...prev[section],
-          [field]: value
+          [field]: type === 'select-multiple' ? Array.from(e.target.selectedOptions, option => option.value) : value
         }
       }));
     } else {
@@ -241,14 +246,28 @@ export default function Profile() {
     }
   };
 
+  const handleArrayChange = (e) => {
+    const { name, value } = e.target;
+    const [section, field] = name.split('.');
+    setFormData(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value.split(',').map(v => v.trim()).filter(Boolean)
+      }
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.put('/users/profile', formData);
-      if (response.data.success) {
+      const response = await api.put('/profile', {
+        name: formData.name,
+        ...formData.profile
+      });
+      if (response.data.profile) {
         toast.success('Profile updated successfully');
-        // Update auth context with new user data
-        updateProfile(response.data.user);
+        updateProfile(response.data.profile);
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -262,14 +281,13 @@ export default function Profile() {
 
   return (
     <PageContainer>
+      <BackButton to="/home">Back to Dashboard</BackButton>
       <Title>Profile Settings</Title>
-
       <ProfileGrid>
         <ProfileSidebar>
-          <ProfileImage image={user?.profile?.avatar || "/default-avatar.jpg"} />
+          <ProfileImage image={formData.profile.avatar || "/default-avatar.jpg"} />
           <ProfileName>{formData.name}</ProfileName>
           <ProfileEmail>{formData.email}</ProfileEmail>
-
           <ProfileStats>
             <Stat>
               <h4>Height</h4>
@@ -281,7 +299,6 @@ export default function Profile() {
             </Stat>
           </ProfileStats>
         </ProfileSidebar>
-
         <ProfileContent>
           <Form onSubmit={handleSubmit}>
             <Section>
@@ -304,10 +321,20 @@ export default function Profile() {
                   value={formData.email}
                   onChange={handleChange}
                   required
+                  disabled
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>Avatar URL</Label>
+                <Input
+                  type="text"
+                  name="profile.avatar"
+                  value={formData.profile.avatar}
+                  onChange={handleChange}
+                  placeholder="Paste image URL or leave blank for default"
                 />
               </FormGroup>
             </Section>
-
             <Section>
               <h3><FaWeight /> Physical Information</h3>
               <FormGroup>
@@ -337,12 +364,74 @@ export default function Profile() {
                   onChange={handleChange}
                 />
               </FormGroup>
+              <FormGroup>
+                <Label>Gender</Label>
+                <select name="profile.gender" value={formData.profile.gender} onChange={handleChange}>
+                  <option value="">Select</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </FormGroup>
+              <FormGroup>
+                <Label>Activity Level</Label>
+                <select name="profile.activityLevel" value={formData.profile.activityLevel} onChange={handleChange}>
+                  <option value="">Select</option>
+                  <option value="sedentary">Sedentary</option>
+                  <option value="light">Light</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="active">Active</option>
+                  <option value="very_active">Very Active</option>
+                </select>
+              </FormGroup>
             </Section>
-
+            <Section>
+              <h3>Preferences & Health</h3>
+              <FormGroup>
+                <Label>Dietary Restrictions (comma separated)</Label>
+                <Input
+                  type="text"
+                  name="profile.dietaryRestrictions"
+                  value={formData.profile.dietaryRestrictions.join(', ')}
+                  onChange={handleArrayChange}
+                  placeholder="e.g. veg, diabetes"
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>Allergies (comma separated)</Label>
+                <Input
+                  type="text"
+                  name="profile.allergies"
+                  value={formData.profile.allergies.join(', ')}
+                  onChange={handleArrayChange}
+                  placeholder="e.g. peanuts, gluten"
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>Goals (comma separated)</Label>
+                <Input
+                  type="text"
+                  name="profile.goals"
+                  value={formData.profile.goals.join(', ')}
+                  onChange={handleArrayChange}
+                  placeholder="e.g. Weight Loss, Muscle Gain"
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>Health Conditions (comma separated)</Label>
+                <Input
+                  type="text"
+                  name="profile.healthConditions"
+                  value={formData.profile.healthConditions.join(', ')}
+                  onChange={handleArrayChange}
+                  placeholder="e.g. diabetes, thyroid"
+                />
+              </FormGroup>
+            </Section>
             <Button type="submit">Save Changes</Button>
           </Form>
         </ProfileContent>
       </ProfileGrid>
     </PageContainer>
   );
-} 
+}

@@ -24,6 +24,10 @@ const mealPlanSchema = new mongoose.Schema({
       enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
       required: true
     },
+    date: {
+      type: Date,
+      required: false // Make it optional for backward compatibility
+    },
     mealType: {
       type: String,
       enum: ['breakfast', 'lunch', 'dinner', 'snack'],

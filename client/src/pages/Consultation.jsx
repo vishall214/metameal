@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FaUserMd, FaDumbbell, FaStar, FaCalendarAlt } from 'react-icons/fa';
+import BackButton from '../components/BackButton';
 
 const PageContainer = styled.div`
   padding: 2rem;
@@ -178,6 +179,7 @@ export default function Consultation() {
 
   return (
     <PageContainer>
+      <BackButton to="/home">Back to Dashboard</BackButton>
       <Title>Professional Consultation</Title>
 
       <Tabs>

@@ -2,11 +2,11 @@ require('dotenv').config();
 
 const config = {
   // Server Configuration
-  PORT: process.env.PORT || 5000,
+  PORT: process.env.PORT || 5002,
   NODE_ENV: process.env.NODE_ENV || 'development',
 
   // MongoDB Configuration
-  MONGODB_URI: process.env.MONGODB_URI || 'mongodb+srv://vishalnyapathi214:5QgwpkLnDSoxkdvf@cluster0.abcd123.mongodb.net/main?retryWrites=true&w=majority',
+  MONGODB_URI: process.env.MONGODB_URI || 'mongodb+srv://vishalnyapathi214:5QgwpkLnDSoxkdvf@maindb.mx4soxz.mongodb.net/?retryWrites=true&w=majority&appName=MainDB',
 
   // JWT Configuration
   JWT_SECRET: process.env.JWT_SECRET || 'your_jwt_secret_key_here',

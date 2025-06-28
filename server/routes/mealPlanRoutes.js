@@ -9,25 +9,33 @@ const {
   deleteMealPlan,
   generateMealPlan,
   getActiveMealPlan,
-  updateMealSelection
+  updateMealSelection,
+  rerollDay,
+  addNextDay,
+  updateRollingMealPlan
 } = require('../controllers/mealPlanController');
 
 // All routes are protected
 router.use(protect);
+
+// Specific routes first (before parameterized routes)
+router.get('/active', getActiveMealPlan);
+router.post('/generate', generateMealPlan);
+router.post('/reroll-day', rerollDay);
+router.post('/add-next-day', addNextDay);
+router.post('/update-rolling', updateRollingMealPlan);
 
 // Base routes
 router.route('/')
   .get(getMealPlans)
   .post(createMealPlan);
 
+// Parameterized routes last
 router.route('/:id')
   .get(getMealPlan)
   .put(updateMealPlan)
   .delete(deleteMealPlan);
 
-// Meal plan generation routes
-router.post('/generate', generateMealPlan);
-router.get('/active', getActiveMealPlan);
 router.put('/:id/meal', updateMealSelection);
 
 module.exports = router; 

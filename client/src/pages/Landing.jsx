@@ -1,8 +1,7 @@
-import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import Button from '../components/Button';
 import { FaUtensils, FaBrain, FaChartLine} from 'react-icons/fa';
-import Navbar from '../components/navbar';
+import Navbar from '../components/Navbar';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px);}
@@ -18,8 +17,7 @@ const HeroSection = styled.section`
   min-height: 100vh;
   display: flex;
   align-items: center;
-  background: linear-gradient(rgba(10, 41, 40, 0.85), rgba(10, 41, 40, 0.95)),
-    url('/hero-food.jpg') center/cover no-repeat;
+  background: linear-gradient(rgba(10, 41, 40, 0.85), rgba(10, 41, 40, 0.95));
   padding: 6rem 2rem;
   position: relative;
   overflow: hidden;
@@ -159,7 +157,7 @@ const Landing = () => {
             </p>
             <ButtonGroup>
               <Button to="/register" variant="primary">Get Started</Button>
-              <Button to="/login" variant="secondary">Login</Button>
+              <Button to="/login" variant="outline">Login</Button>
               <Button to="/about" variant="outline">Learn More</Button>
             </ButtonGroup>
           </HeroContent>

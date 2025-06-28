@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
+// import './index.css'; // Removed as redundant
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import './utils/axios';

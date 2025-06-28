@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { FaLeaf, FaBrain, FaChartLine, FaUsers } from 'react-icons/fa';
+import BackButton from '../components/BackButton';
 
 const PageContainer = styled.div`
   padding: 2rem;
@@ -116,6 +117,7 @@ const features = [
 export default function About() {
   return (
     <PageContainer>
+      <BackButton />
       <HeroSection>
         <Title>About MetaMeal</Title>
         <Subtitle>

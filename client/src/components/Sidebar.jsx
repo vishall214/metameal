@@ -1,17 +1,15 @@
 import React from 'react';
 import styled from 'styled-components';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   FaHome, 
   FaUtensils, 
   FaChartBar, 
   FaInfoCircle,
-  FaCog,
   FaQuestionCircle,
   FaComments,
   FaSignOutAlt,
-  FaUser,
-  FaEnvelope
+  FaUser
 } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -153,6 +151,7 @@ const LogoutButton = styled.button`
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <SidebarContainer>
@@ -182,22 +181,42 @@ const Sidebar = () => {
           <StyledNavLink to="/nutrition-info">
             <FaInfoCircle /> Nutrition Info
           </StyledNavLink>
-          <StyledNavLink to="/quiz">
-            <FaQuestionCircle /> Quiz
-          </StyledNavLink>
+          {/* Only show Quiz link if quiz not completed, else show Retake Quiz button */}
+          {!user?.quizCompleted ? (
+            <StyledNavLink to="/quiz">
+              <FaQuestionCircle /> Quiz
+            </StyledNavLink>
+          ) : (
+            <button
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.6rem 1.5rem',
+                font: 'inherit',
+                cursor: 'pointer',
+                width: '100%',
+                textAlign: 'left',
+                transition: 'all 0.2s',
+                marginBottom: '0.2rem',
+                fontSize: '1rem',
+                borderRadius: '8px',
+                outline: 'none',
+              }}
+              onClick={() => navigate('/quiz')}
+            >
+              <FaQuestionCircle /> Retake Quiz
+            </button>
+          )}
           <StyledNavLink to="/consultation">
             <FaComments /> Consultation
           </StyledNavLink>
-          <StyledNavLink to="/contact">
-            <FaEnvelope /> Contact Us
-          </StyledNavLink>
         </NavGroup>
 
-        <NavGroup>
-          <StyledNavLink to="/settings">
-            <FaCog /> Settings
-          </StyledNavLink>
-        </NavGroup>
+
       </NavContent>
 
       <LogoutButton onClick={logout}>
@@ -208,4 +227,4 @@ const Sidebar = () => {
   );
 };
 
-export default Sidebar; 
+export default Sidebar;

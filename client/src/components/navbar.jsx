@@ -1,8 +1,7 @@
-import React from 'react';
 import styled from 'styled-components';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FaUser, FaSignOutAlt } from 'react-icons/fa';
+import { FaUser } from 'react-icons/fa';
 
 const NavbarContainer = styled.nav`
   background: var(--bg-dark);
@@ -67,17 +66,8 @@ const AuthButton = styled.button`
 `;
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Failed to log out:', error);
-    }
-  };
 
   return (
     <NavbarContainer>
@@ -89,15 +79,11 @@ const Navbar = () => {
               <NavLink to="/meal-plan">Meal Plan</NavLink>
               <NavLink to="/recommendations">Recommendations</NavLink>
               <NavLink to="/quiz">Quiz</NavLink>
-              <NavLink to="/contact">Contact Us</NavLink>
-              <AuthButton onClick={handleLogout}>
-                <FaSignOutAlt /> Logout
-              </AuthButton>
+              {/* No Logout or Sign Up button for authenticated users */}
             </>
           ) : (
             <>
               <NavLink to="/about">About</NavLink>
-              <NavLink to="/contact">Contact Us</NavLink>
               <AuthButton onClick={() => navigate('/login')}>
                 Login
               </AuthButton>
@@ -112,4 +98,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar; 
+export default Navbar;

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -57,11 +57,15 @@ export const mealsAPI = {
 // Meal Plans API
 export const mealPlansAPI = {
   getAll: () => api.get('/meal-plans'),
+  getActive: () => api.get('/meal-plans/active'),
   getById: (id) => api.get(`/meal-plans/${id}`),
   create: (data) => api.post('/meal-plans', data),
   update: (id, data) => api.put(`/meal-plans/${id}`, data),
   delete: (id) => api.delete(`/meal-plans/${id}`),
-  generate: (preferences) => api.post('/meal-plans/generate', preferences)
+  generate: (preferences) => api.post('/meal-plans/generate', preferences),
+  rerollDay: (day) => api.post('/meal-plans/reroll-day', { day }),
+  addNextDay: () => api.post('/meal-plans/add-next-day'),
+  updateRolling: () => api.post('/meal-plans/update-rolling')
 };
 
 // Analytics API

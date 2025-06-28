@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FaBell, FaLock, FaPalette, FaShieldAlt } from 'react-icons/fa';
+import BackButton from '../components/BackButton';
 
 const PageContainer = styled.div`
   padding: 2rem;
@@ -181,6 +182,7 @@ export default function Settings() {
 
   return (
     <PageContainer>
+      <BackButton to="/home">Back to Dashboard</BackButton>
       <Title>Settings</Title>
 
       <SettingsGrid>

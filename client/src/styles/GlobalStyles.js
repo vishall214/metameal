@@ -43,9 +43,9 @@ const GlobalStyles = createGlobalStyle`
   }
 
   .container {
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 1.5rem;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -54,15 +54,28 @@ const GlobalStyles = createGlobalStyle`
   }
 
   h1 {
-    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-size: clamp(1.7rem, 3vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 1.2rem;
   }
 
   h2 {
-    font-size: clamp(2rem, 4vw, 3rem);
+    font-size: clamp(1.2rem, 2.5vw, 1.7rem);
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 0.7rem;
   }
 
   p {
-    margin-bottom: 1rem;
+    margin-bottom: 0.7rem;
+    font-size: 1rem;
+    color: var(--text-muted);
   }
 
   a {
@@ -87,6 +100,19 @@ const GlobalStyles = createGlobalStyle`
   input, textarea, select {
     font-family: inherit;
   }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    border: none;
+    transition: box-shadow 0.3s, transform 0.3s;
+
+    &:hover {
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      transform: translateY(-2px) scale(1.01);
+    }
+  }
 `;
 
-export default GlobalStyles; 
+export default GlobalStyles;

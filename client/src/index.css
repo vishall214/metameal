@@ -2,13 +2,19 @@
   /* Theme Colors */
   --primary: #00B5B0;
   --primary-light: #33C9C4;
+  --primary-dark: #008A87;
+  --primary-rgb: 0, 181, 176;
   --accent: #FF6B6B;
   --bg-dark: #0A2928;
   --bg-light: #0F3635;
   --text-light: #E1E1E6;
   --text-dark: #A8A8B3;
+  --text-muted: #8A8A9A;
   --error: #FF6B6B;
   --success: #4CAF50;
+  --border: #2A3F3E;
+  --card-bg: #1A2F2E;
+  --hover-bg: #1F3534;
 }
 
 * {
@@ -60,4 +66,4 @@ button {
 
 .Toastify__progress-bar {
   background: var(--primary);
-} 
+}

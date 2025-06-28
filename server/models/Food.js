@@ -17,6 +17,6 @@ const foodSchema = new mongoose.Schema({
   addedSugar: { type: Number, required: true },
   sodium: { type: Number, required: true },
   portionSize: { type: Number, required: true },
-});
+}, { collection: 'Food' });
 
-module.exports = mongoose.model('Food', foodSchema);
+module.exports = mongoose.model('Food', foodSchema, 'Food');

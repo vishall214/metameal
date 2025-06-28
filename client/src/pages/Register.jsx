@@ -141,7 +141,7 @@ export default function Register() {
       
       if (result.success) {
         toast.success('Registration successful!');
-        navigate('/quiz');
+        navigate('/login'); // Redirect to login instead
       } else {
         toast.error(result.error || 'Failed to register');
       }

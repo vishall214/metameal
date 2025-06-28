@@ -129,7 +129,7 @@ const BMIResult = styled.div`
 `;
 
 export default function Quiz() {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -214,15 +214,27 @@ export default function Quiz() {
 
     try {
       setLoading(true);
-      await axios.post('/api/users/quiz', 
-        { ...formData },
+      await axios.post('/api/quiz/complete',
+        {
+          profile: {
+            age: formData.age,
+            height: formData.height,
+            weight: formData.weight,
+            gender: formData.gender,
+            activityLevel: formData.activityLevel,
+            filters: formData.filters,
+            goals: formData.goals
+          },
+          preferences: {}
+        },
         {
           headers: {
             Authorization: `Bearer ${user.token}`
           }
         }
       );
-      
+      // Update user context to set quizCompleted: true
+      updateProfile && updateProfile({ ...user, quizCompleted: true });
       toast.success('Quiz completed successfully!');
       navigate('/home');
     } catch (error) {

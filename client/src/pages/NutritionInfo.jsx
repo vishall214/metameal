@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FaBook, FaChartBar, FaCalculator, FaQuestionCircle } from 'react-icons/fa';
+import BackButton from '../components/BackButton';
 
 const PageContainer = styled.div`
   padding: 2rem;
@@ -206,6 +207,7 @@ export default function NutritionInfo() {
 
   return (
     <PageContainer>
+      <BackButton to="/home">Back to Dashboard</BackButton>
       <Title>Nutrition Information</Title>
 
       <TabContainer>

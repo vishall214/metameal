@@ -7,7 +7,6 @@ const { errorHandler, notFound } = require('./middlewares/errorMiddleware');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-
 // Import routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -17,6 +16,7 @@ const consultationRoutes = require('./routes/consultationRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const profileRoutes = require('./routes/profileRoutes');
+const quizRoutes = require('./routes/quizRoutes');
 
 // Connect to MongoDB
 connectDB();
@@ -47,6 +47,7 @@ app.use('/api/consultations', consultationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/quiz', quizRoutes);
 
 // Error Handling
 app.use(notFound);
@@ -54,15 +55,22 @@ app.use(errorHandler);
 
 // Start server with port fallback
 const startServer = (port) => {
+  // Ensure port is a number and within valid range
+  const portNum = parseInt(port);
+  if (portNum > 65535) {
+    console.error('Cannot find available port, giving up');
+    process.exit(1);
+  }
+
   try {
-    const server = app.listen(port, () => {
-      console.log(`🚀 Server running on port ${port} in ${config.NODE_ENV} mode`);
+    const server = app.listen(portNum, () => {
+      console.log(`🚀 Server running on port ${portNum} in ${config.NODE_ENV} mode`);
     });
 
     server.on('error', (e) => {
       if (e.code === 'EADDRINUSE') {
-        console.log(`Port ${port} is busy, trying ${port + 1}...`);
-        startServer(port + 1);
+        console.log(`Port ${portNum} is busy, trying ${portNum + 1}...`);
+        startServer(portNum + 1);
       } else {
         console.error('Server error:', e);
       }
