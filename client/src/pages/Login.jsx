@@ -126,38 +126,6 @@ const PasswordToggle = styled.button`
   }
 `;
 
-const RememberForgot = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  font-size: 0.875rem;
-`;
-
-const CheckboxLabel = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-  
-  input[type="checkbox"] {
-    accent-color: var(--primary);
-  }
-`;
-
-const ForgotLink = styled(Link)`
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all var(--transition);
-  
-  &:hover {
-    color: var(--primary-light);
-    text-decoration: underline;
-  }
-`;
-
 const SignupPrompt = styled.div`
   text-align: center;
   margin-top: 2rem;
@@ -182,7 +150,6 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -262,20 +229,6 @@ export default function Login() {
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </PasswordToggle>
           </FormGroup>
-
-          <RememberForgot>
-            <CheckboxLabel>
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              />
-              Remember me
-            </CheckboxLabel>
-            <ForgotLink to="/forgot-password">
-              Forgot password?
-            </ForgotLink>
-          </RememberForgot>
 
           <Button 
             type="submit" 
