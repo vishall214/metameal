@@ -83,9 +83,9 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <NavLink to="/about">About</NavLink>
+              <NavLink to="/about">About Us</NavLink>
               <AuthButton onClick={() => navigate('/login')}>
-                Login
+                Sign In
               </AuthButton>
               <AuthButton primary onClick={() => navigate('/register')}>
                 <FaUser /> Sign Up

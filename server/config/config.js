@@ -6,7 +6,7 @@ const config = {
   NODE_ENV: process.env.NODE_ENV || 'development',
 
   // MongoDB Configuration
-  MONGODB_URI: process.env.MONGODB_URI || 'mongodb+srv://vishalnyapathi214:5QgwpkLnDSoxkdvf@maindb.mx4soxz.mongodb.net/?retryWrites=true&w=majority&appName=MainDB',
+  MONGODB_URI: process.env.MONGODB_URI || 'mongodb+srv://vishalnyapathi214:5QgwpkLnDSoxkdvf@maindb.mx4soxz.mongodb.net/main?retryWrites=true&w=majority&appName=MainDB',
 
   // JWT Configuration
   JWT_SECRET: process.env.JWT_SECRET || 'your_jwt_secret_key_here',

@@ -9,7 +9,8 @@ import {
   FaQuestionCircle,
   FaComments,
   FaSignOutAlt,
-  FaUser
+  FaUser,
+  FaLightbulb
 } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -171,6 +172,9 @@ const Sidebar = () => {
           </StyledNavLink>
           <StyledNavLink to="/meal-plan">
             <FaUtensils /> Meal Plan
+          </StyledNavLink>
+          <StyledNavLink to="/recommendations">
+            <FaLightbulb /> Workout Recommendations
           </StyledNavLink>
           <StyledNavLink to="/analytics">
             <FaChartBar /> Analytics

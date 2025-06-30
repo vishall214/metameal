@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { 
   FaUtensils, 
   FaWeight, 
+  FaCheckCircle, 
   FaCalendarDay, 
   FaFire, 
   FaDumbbell, 
@@ -413,7 +414,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [calculateDailyProgress]);
+  }, []);
 
   // Calculate daily nutrition progress
   const calculateDailyProgress = (meals) => {

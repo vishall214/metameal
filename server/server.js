@@ -17,6 +17,7 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const quizRoutes = require('./routes/quizRoutes');
+const mlRoutes = require('./routes/mlRoutes');
 
 // Connect to MongoDB
 connectDB();
@@ -48,6 +49,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/quiz', quizRoutes);
+app.use('/api/ml', mlRoutes);
 
 // Error Handling
 app.use(notFound);

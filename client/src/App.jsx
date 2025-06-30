@@ -23,6 +23,7 @@ import Consultation from './pages/Consultation';
 import Analytics from './pages/Analytics';
 import NutritionInfo from './pages/NutritionInfo';
 import Profile from './pages/Profile';
+import Recommendations from './pages/Recommendations';
 import NotFound from './pages/NotFound';
 
 // Protected Route Component
@@ -120,6 +121,11 @@ function App() {
               <Route path="/nutrition-info" element={
                 <ProtectedRoute>
                   <NutritionInfo />
+                </ProtectedRoute>
+              } />
+              <Route path="/recommendations" element={
+                <ProtectedRoute>
+                  <Recommendations />
                 </ProtectedRoute>
               } />
 
