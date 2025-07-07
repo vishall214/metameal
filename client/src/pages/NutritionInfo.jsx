@@ -245,24 +245,24 @@ export default function NutritionInfo() {
             </SectionTitle>
             <InfoGrid>
               <InfoCard>
-                <CardTitle>Macronutrients</CardTitle>
+                <CardTitle>Macronutrients in Indian Diet</CardTitle>
                 <CardContent>
-                  Macronutrients are the nutrients we need in large quantities: proteins, carbohydrates, and fats.
-                  Each plays a vital role in maintaining health and providing energy.
+                  Dal provides protein, rice/roti gives carbohydrates, and ghee supplies healthy fats.
+                  Each plays a vital role in maintaining health and providing sustained energy.
                 </CardContent>
               </InfoCard>
               <InfoCard>
-                <CardTitle>Micronutrients</CardTitle>
+                <CardTitle>Micronutrients from Spices</CardTitle>
                 <CardContent>
-                  Micronutrients include vitamins and minerals that are essential for proper body function,
-                  even though we need them in smaller amounts.
+                  Indian spices like turmeric, cumin, coriander are rich in vitamins and minerals.
+                  These micronutrients support immunity and overall health naturally.
                 </CardContent>
               </InfoCard>
               <InfoCard>
-                <CardTitle>Hydration</CardTitle>
+                <CardTitle>Hydration Indian Style</CardTitle>
                 <CardContent>
-                  Water is crucial for all bodily functions. Aim to drink at least 8 glasses of water daily,
-                  more if you're active or in hot weather.
+                  Include water-rich foods like watermelon, cucumber, coconut water, and buttermilk.
+                  Aim for 8-10 glasses daily, especially during hot Indian summers.
                 </CardContent>
               </InfoCard>
             </InfoGrid>
@@ -314,27 +314,27 @@ export default function NutritionInfo() {
             </SectionTitle>
             <InfoGrid>
               <InfoCard>
-                <CardTitle>Daily Recommendations</CardTitle>
+                <CardTitle>Daily Indian Meal Recommendations</CardTitle>
                 <CardContent>
-                  • 5-6 servings of vegetables and fruits
-                  • 6-8 servings of grains
-                  • 2-3 servings of protein
-                  • 2-3 servings of dairy
-                  • Limited added sugars and saturated fats
+                  • 2-3 servings of dal/legumes for protein
+                  • 4-5 servings of vegetables (sabzi) and fruits
+                  • 6-8 servings of grains (roti, rice, millet)
+                  • 2-3 servings of dairy (dahi, milk, paneer)
+                  • Limited jaggery and ghee consumption
                 </CardContent>
               </InfoCard>
               <InfoCard>
-                <CardTitle>Portion Control</CardTitle>
+                <CardTitle>Portion Control Indian Style</CardTitle>
                 <CardContent>
-                  Understanding portion sizes is key to maintaining a healthy diet.
-                  Use visual cues and measuring tools to ensure proper portions.
+                  Use traditional measures: 1 katori dal, 2 rotis, 1 bowl rice, 1 small bowl sabzi. 
+                  Follow the thali concept for balanced nutrition in every meal.
                 </CardContent>
               </InfoCard>
               <InfoCard>
-                <CardTitle>Meal Timing</CardTitle>
+                <CardTitle>Indian Meal Timing</CardTitle>
                 <CardContent>
-                  Space meals 3-4 hours apart. Include a balance of protein,
-                  complex carbs, and healthy fats in each meal.
+                  Follow traditional Indian meal patterns: Light breakfast with upma/poha, 
+                  substantial lunch with dal-rice-sabzi, and light dinner before sunset when possible.
                 </CardContent>
               </InfoCard>
             </InfoGrid>
@@ -348,24 +348,24 @@ export default function NutritionInfo() {
             </SectionTitle>
             <InfoGrid>
               <InfoCard>
-                <CardTitle>What is a balanced diet?</CardTitle>
+                <CardTitle>What is a balanced Indian diet?</CardTitle>
                 <CardContent>
-                  A balanced diet includes a variety of foods from all food groups
-                  in appropriate proportions to maintain health and well-being.
+                  A balanced Indian diet includes a variety of foods from all food groups: dal (proteins), 
+                  sabzi (vegetables), roti/rice (grains), and dahi (dairy) in appropriate proportions for optimal health.
                 </CardContent>
               </InfoCard>
               <InfoCard>
                 <CardTitle>How much water should I drink?</CardTitle>
                 <CardContent>
-                  The general recommendation is 8 glasses (2 liters) per day,
-                  but this can vary based on activity level and climate.
+                  The general recommendation is 8-10 glasses (2-2.5 liters) per day, 
+                  but this can vary based on activity level, climate, and spice consumption in Indian food.
                 </CardContent>
               </InfoCard>
               <InfoCard>
-                <CardTitle>What are good sources of protein?</CardTitle>
+                <CardTitle>What are good Indian sources of protein?</CardTitle>
                 <CardContent>
-                  Lean meats, fish, eggs, dairy, legumes, nuts, and seeds
-                  are all excellent sources of protein.
+                  Dal (lentils), rajma, chana, paneer, dahi, eggs, fish, chicken, and nuts 
+                  are all excellent sources of protein commonly found in Indian cuisine.
                 </CardContent>
               </InfoCard>
             </InfoGrid>

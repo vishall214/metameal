@@ -10,7 +10,8 @@ import {
   FaComments,
   FaSignOutAlt,
   FaUser,
-  FaLightbulb
+  FaLightbulb,
+  FaMapMarkerAlt
 } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -121,6 +122,35 @@ const StyledNavLink = styled(NavLink)`
   }
 `;
 
+const RetakeButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1.5rem;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  text-align: left;
+  font-size: 1rem;
+
+  svg {
+    font-size: 1.1rem;
+    color: var(--primary);
+  }
+
+  &:hover {
+    background: rgba(0, 181, 176, 0.1);
+    color: var(--primary);
+
+    svg {
+      color: var(--primary);
+    }
+  }
+`;
+
 const LogoutButton = styled.button`
   display: flex;
   align-items: center;
@@ -173,6 +203,9 @@ const Sidebar = () => {
           <StyledNavLink to="/meal-plan">
             <FaUtensils /> Meal Plan
           </StyledNavLink>
+          <StyledNavLink to="/food-explorer">
+            <FaMapMarkerAlt /> Food Explorer
+          </StyledNavLink>
           <StyledNavLink to="/recommendations">
             <FaLightbulb /> Workout Recommendations
           </StyledNavLink>
@@ -185,42 +218,19 @@ const Sidebar = () => {
           <StyledNavLink to="/nutrition-info">
             <FaInfoCircle /> Nutrition Info
           </StyledNavLink>
-          {/* Only show Quiz link if quiz not completed, else show Retake Quiz button */}
           {!user?.quizCompleted ? (
             <StyledNavLink to="/quiz">
               <FaQuestionCircle /> Quiz
             </StyledNavLink>
           ) : (
-            <button
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--primary)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.6rem 1.5rem',
-                font: 'inherit',
-                cursor: 'pointer',
-                width: '100%',
-                textAlign: 'left',
-                transition: 'all 0.2s',
-                marginBottom: '0.2rem',
-                fontSize: '1rem',
-                borderRadius: '8px',
-                outline: 'none',
-              }}
-              onClick={() => navigate('/quiz')}
-            >
+            <RetakeButton onClick={() => navigate('/quiz')}>
               <FaQuestionCircle /> Retake Quiz
-            </button>
+            </RetakeButton>
           )}
           <StyledNavLink to="/consultation">
             <FaComments /> Consultation
           </StyledNavLink>
         </NavGroup>
-
-
       </NavContent>
 
       <LogoutButton onClick={logout}>

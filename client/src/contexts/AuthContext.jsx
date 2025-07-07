@@ -125,8 +125,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     delete api.defaults.headers.common['Authorization'];
     setUser(null);
-    // Redirect to login page
-    window.location.href = '/login';
+    // Redirect to landing page
+    window.location.href = '/';
   };
 
   const updateProfile = async (userData) => {

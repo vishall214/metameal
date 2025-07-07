@@ -12,8 +12,16 @@ const getProfile = asyncHandler(async (req, res) => {
   }
 
   res.json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    username: user.username,
+    role: user.role,
     profile: user.profile,
-    preferences: user.preferences
+    preferences: user.preferences,
+    quizCompleted: user.quizCompleted,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt
   });
 });
 

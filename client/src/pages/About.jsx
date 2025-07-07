@@ -94,23 +94,23 @@ const CTAButton = styled(Link)`
 const features = [
   {
     icon: <FaLeaf />,
-    title: "Healthy Living",
-    description: "Our platform helps you make informed decisions about your nutrition and lifestyle choices."
+    title: "Swasth Bharat Living",
+    description: "Our platform helps you make informed decisions about your nutrition using traditional Indian knowledge combined with modern science."
   },
   {
     icon: <FaBrain />,
-    title: "AI-Powered",
-    description: "Advanced algorithms analyze your preferences and goals to create personalized meal plans."
+    title: "AI-Powered Desi Nutrition",
+    description: "Advanced algorithms analyze your preferences, regional tastes, and health goals to create personalized Indian meal plans."
   },
   {
     icon: <FaChartLine />,
-    title: "Track Progress",
-    description: "Monitor your nutrition journey with detailed analytics and insights."
+    title: "Track Your Wellness Journey",
+    description: "Monitor your nutrition progress with detailed analytics focused on Indian dietary patterns and seasonal eating habits."
   },
   {
     icon: <FaUsers />,
-    title: "Community Support",
-    description: "Connect with others on similar health journeys and share experiences."
+    title: "Indian Health Community",
+    description: "Connect with others following traditional Indian nutrition practices and share recipes, tips, and experiences."
   }
 ];
 
@@ -121,9 +121,9 @@ export default function About() {
       <HeroSection>
         <Title>About MetaMeal</Title>
         <Subtitle>
-          MetaMeal is your personal nutrition companion, powered by artificial intelligence
-          to help you achieve your health and wellness goals through personalized meal planning
-          and expert guidance.
+          MetaMeal is your personal nutrition companion rooted in Indian culinary wisdom, powered by artificial intelligence 
+          to help you achieve your swasthya (health) and wellness goals through personalized desi meal planning 
+          and expert guidance from Indian nutrition specialists.
         </Subtitle>
         <CTAButton to="/register">Get Started</CTAButton>
       </HeroSection>

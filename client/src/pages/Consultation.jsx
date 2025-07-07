@@ -130,41 +130,45 @@ const professionals = {
   doctors: [
     {
       id: 1,
-      name: "Dr. Sarah Johnson",
-      title: "Nutrition Specialist",
+      name: "Dr. Ritwik Thanneeru",
+      title: "Clinical Nutrition Specialist",
       image: "/professionals/doctor1.jpg",
-      bio: "Specialized in sports nutrition and weight management with over 10 years of experience.",
+      bio: "Expert in clinical nutrition and traditional Indian dietary practices with over 12 years of experience in holistic wellness and metabolic health.",
       rating: 4.9,
-      availability: "Mon-Fri, 9AM-5PM"
+      availability: "Mon-Fri, 9AM-5PM",
+      email: "dr.ritwik@metameal.com"
     },
     {
       id: 2,
-      name: "Dr. Michael Chen",
-      title: "Dietitian",
+      name: "Dr. Sankeerthana",
+      title: "Clinical Dietitian & Nutritionist",
       image: "/professionals/doctor2.jpg",
-      bio: "Expert in clinical nutrition and dietary planning for various health conditions.",
+      bio: "Specialized in Indian dietary patterns, diabetes management, and weight loss with focus on regional food preferences.",
       rating: 4.8,
-      availability: "Mon-Sat, 10AM-6PM"
+      availability: "Mon-Sat, 10AM-6PM",
+      email: "dr.sankeerthana@metameal.com"
     }
   ],
   trainers: [
     {
       id: 3,
-      name: "Alex Thompson",
-      title: "Fitness Coach",
+      name: "Arjun Patel",
+      title: "Yoga & Fitness Coach",
       image: "/professionals/trainer1.jpg",
-      bio: "Certified personal trainer specializing in strength training and nutrition.",
+      bio: "Certified yoga instructor and fitness coach specializing in traditional Indian exercises and modern fitness techniques.",
       rating: 4.9,
-      availability: "Mon-Sun, 6AM-8PM"
+      availability: "Mon-Sun, 6AM-8PM",
+      email: "arjun.patel@metameal.com"
     },
     {
       id: 4,
-      name: "Maria Rodriguez",
-      title: "Wellness Coach",
+      name: "Priya Sharma",
+      title: "Holistic Wellness Coach",
       image: "/professionals/trainer2.jpg",
-      bio: "Expert in holistic fitness and nutrition coaching for sustainable results.",
+      bio: "Expert in integrating yoga, pranayama, and traditional wellness principles with modern fitness for complete health transformation.",
       rating: 4.7,
-      availability: "Mon-Fri, 7AM-7PM"
+      availability: "Mon-Fri, 7AM-7PM",
+      email: "priya.sharma@metameal.com"
     }
   ]
 };
@@ -173,8 +177,26 @@ export default function Consultation() {
   const [activeTab, setActiveTab] = useState('doctors');
 
   const handleBookConsultation = (professional) => {
-    // Implement booking logic
-    console.log('Booking consultation with:', professional.name);
+    const subject = `Consultation Request - ${professional.title}`;
+    const body = `Dear ${professional.name},
+
+I hope this email finds you well. I am reaching out to schedule a consultation session with you.
+
+I am interested in:
+- Personalized nutrition guidance
+- Dietary recommendations based on my health goals
+- Professional advice on my current eating habits
+
+Please let me know your availability and preferred consultation format (in-person, video call, or phone consultation).
+
+Thank you for your time, and I look forward to hearing from you.
+
+Best regards,
+[Your Name]
+MetaMeal User`;
+
+    const mailtoLink = `mailto:${professional.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoLink, '_blank');
   };
 
   return (
@@ -213,8 +235,7 @@ export default function Consultation() {
                 <span>{professional.rating}</span>
               </Rating>
               <ActionButton onClick={() => handleBookConsultation(professional)}>
-                <FaCalendarAlt /> Book Consultation
-              </ActionButton>
+                <FaCalendarAlt />  Consult              </ActionButton>
             </ProfessionalContent>
           </ProfessionalCard>
         ))}

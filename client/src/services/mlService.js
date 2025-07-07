@@ -5,21 +5,15 @@ class MLService {
     this.model = null;
     this.isModelLoaded = false;
   }
-
-  // Load a pre-trained model or create a simple recommendation model
   async loadModel() {
     try {
-      // Option 1: Load a pre-trained model from URL
-      // this.model = await tf.loadLayersModel('/path/to/your/model.json');
-      
-      // Option 2: Create a simple neural network for meal recommendations
       this.model = tf.sequential({
         layers: [
           tf.layers.dense({ inputShape: [10], units: 64, activation: 'relu' }),
           tf.layers.dropout({ rate: 0.2 }),
           tf.layers.dense({ units: 32, activation: 'relu' }),
           tf.layers.dense({ units: 16, activation: 'relu' }),
-          tf.layers.dense({ units: 5, activation: 'softmax' }) // 5 meal categories
+          tf.layers.dense({ units: 5, activation: 'softmax' })
         ]
       });
 
@@ -36,19 +30,16 @@ class MLService {
     }
   }
 
-  // Generate meal recommendations based on user preferences
   async getMealRecommendations(userProfile) {
     if (!this.isModelLoaded) {
       await this.loadModel();
     }
 
     try {
-      // Convert user profile to feature vector
       const features = this.extractFeatures(userProfile);
       const prediction = this.model.predict(tf.tensor2d([features]));
       const probabilities = await prediction.data();
       
-      // Convert probabilities to meal recommendations
       return this.convertToRecommendations(probabilities);
     } catch (error) {
       console.error('❌ Prediction failed:', error);
@@ -56,7 +47,6 @@ class MLService {
     }
   }
 
-  // Extract features from user profile for ML model
   extractFeatures(userProfile) {
     const {
       age = 25,
@@ -69,7 +59,6 @@ class MLService {
       previousMeals = []
     } = userProfile;
 
-    // Normalize and encode features
     const features = [
       age / 100,                                    // Normalized age
       weight / 150,                                 // Normalized weight
@@ -133,7 +122,6 @@ class MLService {
     ];
   }
 
-  // Nutrition analysis using a simple model
   async analyzeNutrition(mealData) {
     const { ingredients, portions } = mealData;
     

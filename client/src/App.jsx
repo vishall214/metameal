@@ -15,7 +15,7 @@ import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Home from './pages/Home_new';
+import Home from './pages/Home';
 import MealPlan from './pages/MealPlan';
 import Quiz from './pages/Quiz';
 import About from './pages/About';
@@ -25,6 +25,7 @@ import NutritionInfo from './pages/NutritionInfo';
 import Profile from './pages/Profile';
 import Recommendations from './pages/Recommendations';
 import NotFound from './pages/NotFound';
+import FoodExplorer from './pages/FoodExplorer';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -126,6 +127,11 @@ function App() {
               <Route path="/recommendations" element={
                 <ProtectedRoute>
                   <Recommendations />
+                </ProtectedRoute>
+              } />
+              <Route path="/food-explorer" element={
+                <ProtectedRoute>
+                  <FoodExplorer />
                 </ProtectedRoute>
               } />
 

@@ -2,23 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { 
   FaUtensils, 
-  FaWeight, 
-  FaCheckCircle, 
-  FaCalendarDay, 
   FaFire, 
   FaDumbbell, 
-  FaBreadSlice, 
   FaTint,
-  FaChartLine,
-  FaBullseye,
-  FaPlay,
-  FaArrowRight,
-  FaTrophy
+  FaRunning,
+  FaCalendarDay,
+  FaCheck
 } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import { mealPlansAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import MealCard from '../components/mealcard';
+import api from '../services/api';
 
 // Main Dashboard Container
 const DashboardContainer = styled.div`
@@ -27,26 +23,37 @@ const DashboardContainer = styled.div`
   margin: 0 auto;
 `;
 
-// Welcome Header
-const WelcomeHeader = styled.div`
+// Dashboard Content Grid
+const DashboardGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
   margin-bottom: 2rem;
-`;
-
-const WelcomeTitle = styled.h1`
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--text-light);
-  margin-bottom: 0.5rem;
   
-  span {
-    color: var(--primary);
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 `;
 
-const WelcomeSubtitle = styled.p`
-  font-size: 1.1rem;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
+// Welcome Header
+const WelcomeHeader = styled.div`
+  margin-bottom: 2rem;
+  
+  h1 {
+    font-size: 2.5rem;
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+    
+    span {
+      color: var(--primary);
+    }
+  }
+  
+  p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+  }
 `;
 
 const DateInfo = styled.div`
@@ -56,426 +63,790 @@ const DateInfo = styled.div`
   color: var(--text-light);
   font-size: 1rem;
   opacity: 0.8;
+  margin-top: 1rem;
 `;
 
-// Progress Overview Section
-const ProgressOverview = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
+// Progress Section
+const ProgressSection = styled.div`
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
   
-  @media (max-width: 968px) {
-    grid-template-columns: 1fr;
+  h2 {
+    color: var(--text-light);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.4rem;
   }
 `;
 
-// Daily Goals Card
-const GoalsCard = styled.div`
-  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(0, 181, 176, 0.05) 100%);
-  border-radius: 20px;
-  padding: 2rem;
+const ProgressGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+`;
+
+const ProgressCard = styled.div`
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1rem;
   border: 1px solid var(--border);
-`;
-
-const GoalsHeader = styled.div`
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  min-height: 120px;
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary);
+  }
+  
+  .progress-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    
+    .metric-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      .icon {
+        font-size: 1.2rem;
+        color: var(--primary);
+      }
+      
+      .label {
+        color: var(--text-light);
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+    }
+    
+    .weekly-indicator {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background: rgba(0, 181, 176, 0.1);
+      padding: 0.25rem 0.5rem;
+      border-radius: 8px;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+  }
+  
+  .progress-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    
+    .values {
+      .current-value {
+        color: var(--text-light);
+        font-size: 1.2rem;
+        font-weight: 700;
+        line-height: 1;
+      }
+      
+      .target-value {
+        color: var(--text-muted);
+        font-size: 0.65rem;
+        margin-top: 0.2rem;
+        font-weight: 500;
+      }
+    }
+    
+    .mini-progress {
+      width: 40px;
+      height: 40px;
+      position: relative;
+      
+      .progress-ring {
+        transform: rotate(-90deg);
+        
+        .ring-bg {
+          fill: none;
+          stroke: rgba(0, 181, 176, 0.1);
+          stroke-width: 3;
+        }
+        
+        .ring-progress {
+          fill: none;
+          stroke: var(--primary);
+          stroke-width: 3;
+          stroke-linecap: round;
+          transition: stroke-dasharray 0.5s ease;
+        }
+      }
+      
+      .progress-percentage {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--primary);
+      }
+    }
+  }
+  
+  .weekly-dots {
+    display: flex;
+    gap: 0.3rem;
+    margin-top: 0.5rem;
+    
+    .day-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(0, 181, 176, 0.2);
+      transition: all 0.3s ease;
+      
+      &.completed {
+        background: var(--primary);
+        transform: scale(1.2);
+      }
+      
+      &.today {
+        background: var(--primary);
+        opacity: 0.7;
+        animation: pulse 2s infinite;
+      }
+    }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
 `;
 
-const GoalsTitle = styled.h2`
-  font-size: 1.5rem;
-  color: var(--text-light);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+// Goals Section
+const GoalsSection = styled.div`
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  
+  h2 {
+    color: var(--text-light);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.4rem;
+  }
 `;
 
-const NutritionGrid = styled.div`
+const GoalsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
 `;
 
-// Progress Ring Component
-const ProgressRing = styled.div`
-  position: relative;
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1rem;
-`;
-
-const ProgressCircle = styled.svg`
+const GoalCard = styled.button`
+  background: ${props => props.completed ? 
+    'linear-gradient(135deg, rgba(0, 181, 176, 0.25), rgba(0, 181, 176, 0.15))' : 
+    'linear-gradient(135deg, rgba(0, 181, 176, 0.1), rgba(0, 181, 176, 0.05))'
+  };
+  border: ${props => props.completed ? 
+    '2px solid var(--primary)' : 
+    '1px solid rgba(0, 181, 176, 0.2)'
+  };
+  border-radius: 20px;
+  padding: 1.25rem;
+  cursor: ${props => props.completed ? 'not-allowed' : 'pointer'};
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
   width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-`;
-
-const ProgressBackground = styled.circle`
-  fill: none;
-  stroke: rgba(0, 181, 176, 0.1);
-  stroke-width: 8;
-`;
-
-const ProgressForeground = styled.circle`
-  fill: none;
-  stroke: var(--primary);
-  stroke-width: 8;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.5s ease;
-`;
-
-const ProgressText = styled.div`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
+  position: relative;
+  overflow: hidden;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  opacity: ${props => props.completed ? '0.8' : '1'};
   
-  .percentage {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text-light);
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${props => props.completed ? 
+      'linear-gradient(135deg, rgba(0, 181, 176, 0.15), transparent)' : 
+      'transparent'
+    };
+    transition: all 0.3s ease;
   }
-  
-  .label {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-  }
-`;
-
-// Nutrition Progress Card
-const NutritionCard = styled.div`
-  background: rgba(0, 181, 176, 0.05);
-  border-radius: 16px;
-  padding: 1.5rem;
-  border: 1px solid rgba(0, 181, 176, 0.1);
-  cursor: pointer;
-  transition: all 0.3s ease;
   
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 181, 176, 0.15);
-  }
-`;
-
-const NutritionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  color: var(--text-light);
-`;
-
-const NutritionValues = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1rem;
-  
-  .current {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-light);
+    transform: ${props => props.completed ? 'none' : 'translateY(-3px) scale(1.02)'};
+    box-shadow: ${props => props.completed ? 'none' : '0 12px 30px rgba(0, 181, 176, 0.25)'};
+    border-color: ${props => props.completed ? 'var(--primary)' : 'var(--primary)'};
+    
+    &::before {
+      background: ${props => props.completed ? 
+        'linear-gradient(135deg, rgba(0, 181, 176, 0.15), transparent)' :
+        'linear-gradient(135deg, rgba(0, 181, 176, 0.2), transparent)'
+      };
+    }
   }
   
-  .target {
-    font-size: 0.9rem;
+  &:active {
+    transform: ${props => props.completed ? 'none' : 'translateY(-1px) scale(0.98)'};
+  }
+  
+  .goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    position: relative;
+    z-index: 1;
+    
+    .goal-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      font-weight: 700;
+      
+      svg {
+        font-size: 1.1rem;
+        color: var(--primary);
+        filter: drop-shadow(0 2px 4px rgba(0, 181, 176, 0.3));
+      }
+    }
+    
+    .check-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: ${props => props.completed ? 
+        'linear-gradient(135deg, var(--primary), #00d4aa)' : 
+        'transparent'
+      };
+      border: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      transition: all 0.3s ease;
+      
+      ${props => props.completed && `
+        box-shadow: 0 0 15px rgba(0, 181, 176, 0.5);
+        animation: pulse 2s infinite;
+      `}
+      
+      svg {
+        font-size: 0.8rem;
+      }
+    }
+  }
+  
+  .goal-progress {
     color: var(--text-muted);
+    font-size: 0.75rem;
+    position: relative;
+    z-index: 1;
+    font-weight: 500;
+    opacity: 0.8;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  
+  .goal-contribution {
+    color: var(--primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    opacity: 1;
+    background: rgba(0, 181, 176, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 181, 176, 0.3);
+    text-align: center;
+    margin-top: 0.2rem;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
   }
 `;
 
-// Quick Stats Card
-const QuickStatsCard = styled.div`
+// Meals Section
+const MealsSection = styled.div`
   background: var(--card-bg);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 2rem;
   border: 1px solid var(--border);
-`;
-
-const StatsGrid = styled.div`
-  display: grid;
-  gap: 1.5rem;
-`;
-
-const StatItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: rgba(0, 181, 176, 0.05);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
   
-  &:hover {
-    background: rgba(0, 181, 176, 0.1);
-    transform: translateX(5px);
-  }
-`;
-
-const StatIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: var(--primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-`;
-
-const StatContent = styled.div`
-  flex: 1;
-  
-  .value {
-    font-size: 1.25rem;
-    font-weight: 700;
+  h2 {
     color: var(--text-light);
-    margin-bottom: 0.25rem;
-  }
-  
-  .label {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-  }
-`;
-
-// Today's Meals Section
-const TodayMealsSection = styled.div`
-  margin-bottom: 2rem;
-`;
-
-const SectionHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 1.75rem;
-  color: var(--text-light);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const ViewAllButton = styled.button`
-  background: transparent;
-  border: 1px solid var(--primary);
-  color: var(--primary);
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  
-  &:hover {
-    background: var(--primary);
-    color: white;
-    transform: translateY(-2px);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 `;
 
 const MealsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
 `;
 
-// Empty State
-const EmptyMealsState = styled.div`
+const MealTypeSection = styled.div`
+  h3 {
+    color: var(--text-light);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: capitalize;
+  }
+`;
+
+const EmptyState = styled.div`
   text-align: center;
-  padding: 3rem;
-  background: rgba(0, 181, 176, 0.05);
-  border-radius: 16px;
-  border: 2px dashed rgba(0, 181, 176, 0.2);
+  padding: 2rem;
+  color: var(--text-muted);
   
   .icon {
     font-size: 3rem;
     margin-bottom: 1rem;
-  }
-  
-  h3 {
-    color: var(--text-light);
-    margin-bottom: 0.5rem;
-  }
-  
-  p {
-    color: var(--text-muted);
-    margin-bottom: 1.5rem;
+    opacity: 0.5;
   }
 `;
 
-const ActionButton = styled.button`
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  
-  &:hover {
-    background: var(--primary-light);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 181, 176, 0.3);
-  }
+const LoadingState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-light);
 `;
-
-// Component for Progress Ring
-const CircularProgress = ({ percentage, children }) => {
-  const radius = 36;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-  return (
-    <ProgressRing>
-      <ProgressCircle>
-        <ProgressBackground
-          cx="40"
-          cy="40"
-          r={radius}
-        />
-        <ProgressForeground
-          cx="40"
-          cy="40"
-          r={radius}
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-        />
-      </ProgressCircle>
-      <ProgressText>
-        <div className="percentage">{Math.round(percentage)}%</div>
-        {children}
-      </ProgressText>
-    </ProgressRing>
-  );
-};
 
 export default function Home() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
   const [todayMeals, setTodayMeals] = useState([]);
   const [dailyProgress, setDailyProgress] = useState({
     calories: { current: 0, target: 2000 },
     protein: { current: 0, target: 120 },
-    carbs: { current: 0, target: 250 },
-    fats: { current: 0, target: 65 }
+    water: { current: 0, target: 8 },
+    exercise: { current: 0, target: 30 }
   });
-  const [stats, setStats] = useState({
-    streak: 0,
-    completedGoals: 0,
-    totalMeals: 0,
-    weekProgress: 85
+  
+  // Weekly progress tracking - now tracks actual accumulated values
+  const [weeklyProgress, setWeeklyProgress] = useState({
+    calories: { current: 0, target: 14000 }, // 2000 * 7 days
+    protein: { current: 0, target: 840 },    // 120 * 7 days
+    water: { current: 0, target: 56 },       // 8 * 7 days
+    exercise: { current: 0, target: 210 }    // 30 * 7 days
   });
-  const [loading, setLoading] = useState(true);
+  
+  // Track daily completion status for visual dots
+  const [dailyCompletionStatus, setDailyCompletionStatus] = useState({
+    calories: [false, false, false, false, false, false, false], // Mon-Sun
+    protein: [false, false, false, false, false, false, false],
+    water: [false, false, false, false, false, false, false],
+    exercise: [false, false, false, false, false, false, false]
+  });
+  
+  const [goals, setGoals] = useState([]);
 
-  // Get today's day name
-  const getTodayDayName = () => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    return days[new Date().getDay()];
-  };
+  // Add progress state for goals tracking
+  const [progress, setProgress] = useState({
+    calories: { daily: 0, todayContribution: 0 },
+    protein: { daily: 0, todayContribution: 0 },
+    water: { daily: 0, todayContribution: 0 },
+    exercise: { daily: 0, todayContribution: 0 }
+  });
 
-  // Fetch today's meals
-  const fetchTodayMeals = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await mealPlansAPI.getAll();
-      
-      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-        const mostRecentPlan = response.data[0];
-        const today = getTodayDayName();
-        
-        // Filter meals for today
-        const todaysMeals = (mostRecentPlan.meals || []).filter(meal => meal.day === today);
-        setTodayMeals(todaysMeals);
-        
-        // Calculate daily progress
-        calculateDailyProgress(todaysMeals);
-      } else {
-        setTodayMeals([]);
+  // Daily completion tracking with date persistence
+  const [dailyCompletions, setDailyCompletions] = useState({});
+  const [lastCompletionDate, setLastCompletionDate] = useState(null);
+
+  // Generate goals with current progress and contribution data
+  const generateGoals = useCallback(() => {
+    if (!userProfile) return [];
+    
+    return [
+      {
+        id: 'calories',
+        label: 'Reach Daily Calories',
+        title: 'Daily Calories',
+        description: 'Meet your calorie target',
+        target: userProfile.dailyCalories || 2000,
+        current: progress.calories.daily,
+        unit: 'kcal',
+        icon: FaFire,
+        color: 'var(--primary)',
+        completed: isGoalCompletedToday('calories'),
+        contribution: progress.calories.todayContribution || 0
+      },
+      {
+        id: 'protein',
+        label: 'Meet Protein Goal',
+        title: 'Daily Protein',
+        description: 'Fuel your muscle growth',
+        target: userProfile.dailyProtein || 150,
+        current: progress.protein.daily,
+        unit: 'g',
+        icon: FaDumbbell,
+        color: '#FF6B6B',
+        completed: isGoalCompletedToday('protein'),
+        contribution: progress.protein.todayContribution || 0
+      },
+      {
+        id: 'water',
+        label: 'Drink 8 Glasses Water',
+        title: 'Daily Water',
+        description: 'Stay hydrated',
+        target: userProfile.dailyWater || 8,
+        current: progress.water.daily,
+        unit: 'glasses',
+        icon: FaTint,
+        color: '#4ECDC4',
+        completed: isGoalCompletedToday('water'),
+        contribution: progress.water.todayContribution || 0
+      },
+      {
+        id: 'exercise',
+        label: 'Exercise 30 Minutes',
+        title: 'Daily Exercise',
+        description: 'Active lifestyle',
+        target: userProfile.dailyExercise || 30,
+        current: progress.exercise.daily,
+        unit: 'min',
+        icon: FaRunning,
+        color: '#45B7D1',
+        completed: isGoalCompletedToday('exercise'),
+        contribution: progress.exercise.todayContribution || 0
       }
-    } catch (error) {
-      console.error('Error fetching today\'s meals:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    ];
+  }, [userProfile, progress, dailyCompletions]);
 
-  // Calculate daily nutrition progress
-  const calculateDailyProgress = (meals) => {
-    let totalCalories = 0;
-    let totalProtein = 0;
-    let totalCarbs = 0;
-    let totalFats = 0;
-
-    meals.forEach(mealItem => {
-      const meal = mealItem.meal;
-      if (meal) {
-        totalCalories += Number(meal.calories) || 0;
-        totalProtein += Number(meal.protein) || 0;
-        totalCarbs += Number(meal.carbs) || 0;
-        totalFats += Number(meal.fats) || 0;
-      }
-    });
-
-    // Get user's targets from profile or use defaults
-    const userProfile = user?.profile || {};
-    const targets = {
-      calories: userProfile.calorieGoal || 2000,
-      protein: userProfile.proteinGoal || 120,
-      carbs: userProfile.carbGoal || 250,
-      fats: userProfile.fatGoal || 65
-    };
-
-    setDailyProgress({
-      calories: { current: totalCalories, target: targets.calories },
-      protein: { current: totalProtein, target: targets.protein },
-      carbs: { current: totalCarbs, target: targets.carbs },
-      fats: { current: totalFats, target: targets.fats }
-    });
-
-    // Update stats
-    setStats(prev => ({
-      ...prev,
-      completedGoals: [
-        totalCalories >= targets.calories * 0.9,
-        totalProtein >= targets.protein * 0.9,
-        totalCarbs >= targets.carbs * 0.9,
-        totalFats >= targets.fats * 0.9
-      ].filter(Boolean).length,
-      totalMeals: meals.length
-    }));
-  };
-
-  // Format date
-  const formatDate = () => {
+  // Get today's date info
+  const getTodayInfo = () => {
     const today = new Date();
-    return today.toLocaleDateString('en-US', { 
+    const dayName = today.toLocaleDateString('en-US', { weekday: 'long' });
+    const fullDate = today.toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     });
+    const dateKey = today.toDateString(); // Used for comparison
+    return { dayName, fullDate, dateKey };
   };
 
+  // Get today's date key for completion tracking
+  const getTodayDateKey = () => {
+    return new Date().toDateString();
+  };
+
+  // Check if goal is completed today
+  const isGoalCompletedToday = (goalId) => {
+    const todayKey = getTodayDateKey();
+    return dailyCompletions[goalId] === todayKey;
+  };
+
+  // Load daily completions from localStorage
+  const loadDailyCompletions = () => {
+    try {
+      const saved = localStorage.getItem('metameal_daily_completions');
+      const savedDate = localStorage.getItem('metameal_last_completion_date');
+      
+      if (saved && savedDate) {
+        const completions = JSON.parse(saved);
+        const lastDate = savedDate;
+        const todayKey = getTodayDateKey();
+        
+        // If it's a new day, reset completions
+        if (lastDate !== todayKey) {
+          return {};
+        }
+        
+        return completions;
+      }
+    } catch (error) {
+      console.error('Error loading daily completions:', error);
+    }
+    return {};
+  };
+
+  // Save daily completions to localStorage
+  const saveDailyCompletions = (completions) => {
+    try {
+      const todayKey = getTodayDateKey();
+      localStorage.setItem('metameal_daily_completions', JSON.stringify(completions));
+      localStorage.setItem('metameal_last_completion_date', todayKey);
+    } catch (error) {
+      console.error('Error saving daily completions:', error);
+    }
+  };
+
+  // Get current day index (0 = Monday, 6 = Sunday)
+  const getCurrentDayIndex = () => {
+    const today = new Date();
+    const day = today.getDay();
+    return day === 0 ? 6 : day - 1; // Convert Sunday (0) to 6, Monday (1) to 0, etc.
+  };
+
+  // Get weekly progress display data
+  const getWeeklyProgressData = (metric) => {
+    const progressData = weeklyProgress[metric];
+    const dailyStatus = dailyCompletionStatus[metric];
+    const currentDayIndex = getCurrentDayIndex();
+    const completedDays = dailyStatus.filter(day => day).length;
+    
+    return {
+      current: progressData.current,
+      target: progressData.target,
+      weeklyData: dailyStatus,
+      completedDays,
+      currentDayIndex,
+      weeklyPercentage: Math.round((progressData.current / progressData.target) * 100)
+    };
+  };
+
+  // Get daily target values
+  const getDailyTargets = () => {
+    return {
+      calories: dailyProgress.calories.target,
+      protein: dailyProgress.protein.target,
+      water: dailyProgress.water.target,
+      exercise: dailyProgress.exercise.target
+    };
+  };
+
+  // Fetch user profile from database
+  const fetchUserProfile = async () => {
+    try {
+      const response = await api.get('/profile');
+      const userData = response.data;
+      
+      setUserProfile(userData);
+      
+      // Update daily progress targets based on user preferences (but keep current at 0)
+      if (userData.preferences) {
+        const calorieGoal = userData.preferences.calorieGoal || 2000;
+        const proteinGoal = userData.preferences.proteinGoal || 120;
+        
+        setDailyProgress(prev => ({
+          calories: { 
+            current: 0, // Always start at 0
+            target: calorieGoal
+          },
+          protein: { 
+            current: 0, // Always start at 0
+            target: proteinGoal
+          },
+          water: { current: 0, target: 8 }, // Always start at 0
+          exercise: { current: 0, target: 30 } // Always start at 0
+        }));
+        
+        // Update weekly targets based on daily targets
+        setWeeklyProgress(prev => ({
+          calories: { ...prev.calories, target: calorieGoal * 7 },
+          protein: { ...prev.protein, target: proteinGoal * 7 },
+          water: { ...prev.water, target: 8 * 7 },
+          exercise: { ...prev.exercise, target: 30 * 7 }
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      toast.error('Failed to load user profile. Using default values.');
+      // Set default values on error
+      setDailyProgress({
+        calories: { current: 0, target: 2000 },
+        protein: { current: 0, target: 120 },
+        water: { current: 0, target: 8 },
+        exercise: { current: 0, target: 30 }
+      });
+    }
+  };
+
+  // Fetch today's meals (just for display, doesn't affect progress)
+  const fetchTodayMeals = async () => {
+    try {
+      const response = await mealPlansAPI.getAll();
+      
+      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+        const mostRecentPlan = response.data[0];
+        const { dayName } = getTodayInfo();
+        
+        // Filter meals for today
+        const todaysMeals = (mostRecentPlan.meals || []).filter(meal => meal.day === dayName);
+        setTodayMeals(todaysMeals);
+      } else {
+        setTodayMeals([]);
+      }
+    } catch (error) {
+      console.error('Error fetching today\'s meals:', error);
+      toast.warn('Could not load today\'s meals. Please check your meal plan.');
+      setTodayMeals([]);
+    }
+  };
+
+  // Handle goal click with daily completion tracking
+  const handleGoalClick = (goalId) => {
+    // Check if goal is already completed today
+    if (isGoalCompletedToday(goalId)) {
+      // Goal already completed today, show message
+      toast.info(`You've already completed your ${goalId} goal today! Come back tomorrow 🌅`);
+      return;
+    }
+
+    const currentDayIndex = getCurrentDayIndex();
+    const dailyTargets = getDailyTargets();
+    const todayKey = getTodayDateKey();
+    
+    // Mark goal as completed for today
+    const newCompletions = {
+      ...dailyCompletions,
+      [goalId]: todayKey
+    };
+    setDailyCompletions(newCompletions);
+    saveDailyCompletions(newCompletions);
+
+    // Show success message
+    toast.success(`🎉 ${goalId.charAt(0).toUpperCase() + goalId.slice(1)} goal completed! Great job!`);
+    
+    setGoals(prev => prev.map(goal => {
+      if (goal.id === goalId) {
+        const contributionValue = dailyTargets[goalId] || 0;
+        
+        // Update daily completion status for visual dots
+        setDailyCompletionStatus(prevDaily => ({
+          ...prevDaily,
+          [goalId]: prevDaily[goalId].map((day, index) => 
+            index === currentDayIndex ? true : day
+          )
+        }));
+        
+        // Update weekly cumulative progress
+        setWeeklyProgress(prevWeekly => ({
+          ...prevWeekly,
+          [goalId]: {
+            ...prevWeekly[goalId],
+            current: prevWeekly[goalId].current + contributionValue
+          }
+        }));
+        
+        // Update progress state with contribution tracking
+        setProgress(prevProgress => ({
+          ...prevProgress,
+          [goalId]: {
+            ...prevProgress[goalId],
+            daily: contributionValue,
+            todayContribution: contributionValue
+          }
+        }));
+        
+        // Update daily progress when goal is completed
+        if (goalId === 'water') {
+          setDailyProgress(prevProgress => ({
+            ...prevProgress,
+            water: { 
+              ...prevProgress.water, 
+              current: prevProgress.water.target
+            }
+          }));
+        } else if (goalId === 'exercise') {
+          setDailyProgress(prevProgress => ({
+            ...prevProgress,
+            exercise: { 
+              ...prevProgress.exercise, 
+              current: prevProgress.exercise.target
+            }
+          }));
+        } else if (goalId === 'calories') {
+          setDailyProgress(prevProgress => ({
+            ...prevProgress,
+            calories: { 
+              ...prevProgress.calories, 
+              current: prevProgress.calories.target
+            }
+          }));
+        } else if (goalId === 'protein') {
+          setDailyProgress(prevProgress => ({
+            ...prevProgress,
+            protein: { 
+              ...prevProgress.protein, 
+              current: prevProgress.protein.target
+            }
+          }));
+        }
+        
+        return { 
+          ...goal, 
+          completed: true,
+          contribution: contributionValue
+        };
+      }
+      return goal;
+    }));
+  };
+
+  // Initialize data
   useEffect(() => {
-    fetchTodayMeals();
-  }, [fetchTodayMeals]);
+    const initializeDashboard = async () => {
+      setLoading(true);
+      
+      try {
+        // Load daily completions from localStorage
+        const savedCompletions = loadDailyCompletions();
+        setDailyCompletions(savedCompletions);
+        
+        // Fetch user data
+        await Promise.all([
+          fetchUserProfile(),
+          fetchTodayMeals()
+        ]);
+      } catch (error) {
+        console.error('Error initializing dashboard:', error);
+        toast.error('Failed to load dashboard data. Please refresh the page.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeDashboard();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update goals when userProfile or progress changes
+  useEffect(() => {
+    if (userProfile) {
+      const updatedGoals = generateGoals();
+      setGoals(updatedGoals);
+    }
+  }, [userProfile, progress, generateGoals]);
 
   // Group meals by type
   const groupedMeals = todayMeals.reduce((acc, meal) => {
@@ -485,182 +856,290 @@ export default function Home() {
     return acc;
   }, {});
 
+  const { fullDate } = getTodayInfo();
+
+  if (loading) {
+    return (
+      <DashboardContainer>
+        <LoadingState>
+          <div>Loading your dashboard...</div>
+        </LoadingState>
+      </DashboardContainer>
+    );
+  }
+
   return (
     <DashboardContainer>
       {/* Welcome Header */}
       <WelcomeHeader>
-        <WelcomeTitle>
-          Welcome back, <span>{user?.name || 'User'}</span>! 👋
-        </WelcomeTitle>
-        <WelcomeSubtitle>
-          Let's make today a healthy and productive day
-        </WelcomeSubtitle>
+        <h1>Welcome back, <span>{userProfile?.name || user?.name || 'User'}</span>! 👋</h1>
+        <p>Here's your health summary for today</p>
         <DateInfo>
           <FaCalendarDay />
-          {formatDate()}
+          {fullDate}
         </DateInfo>
       </WelcomeHeader>
 
-      {/* Progress Overview */}
-      <ProgressOverview>
-        {/* Daily Goals Card */}
-        <GoalsCard>
-          <GoalsHeader>
-            <GoalsTitle>
-              <FaBullseye />
-              Today's Nutrition Goals
-            </GoalsTitle>
-          </GoalsHeader>
-          
-          <NutritionGrid>
-            <NutritionCard onClick={() => navigate('/analytics')}>
-              <NutritionHeader>
-                <FaFire />
-                <span>Calories</span>
-              </NutritionHeader>
-              <CircularProgress 
-                percentage={(dailyProgress.calories.current / dailyProgress.calories.target) * 100}
-              >
-                <div className="label">kcal</div>
-              </CircularProgress>
-              <NutritionValues>
-                <span className="current">{Math.round(dailyProgress.calories.current)}</span>
-                <span className="target">/ {dailyProgress.calories.target}</span>
-              </NutritionValues>
-            </NutritionCard>
+      {/* Progress and Goals Grid */}
+      <DashboardGrid>
+        {/* Daily Progress */}
+        <ProgressSection>
+          <h2><FaFire /> Weekly Progress</h2>
+          <ProgressGrid>
+            <ProgressCard>
+              <div className="progress-header">
+                <div className="metric-info">
+                  <div className="icon"><FaFire /></div>
+                  <div className="label">Calories</div>
+                </div>
+                <div className="weekly-indicator">This Week</div>
+              </div>
+              <div className="progress-content">
+                <div className="values">
+                  <div className="current-value">
+                    {Math.round(getWeeklyProgressData('calories').current).toLocaleString()}
+                  </div>
+                  <div className="target-value">of {getWeeklyProgressData('calories').target.toLocaleString()} kcal</div>
+                </div>
+                <div className="mini-progress">
+                  <svg className="progress-ring" width="40" height="40">
+                    <circle 
+                      className="ring-bg" 
+                      cx="20" 
+                      cy="20" 
+                      r="16" 
+                    />
+                    <circle 
+                      className="ring-progress" 
+                      cx="20" 
+                      cy="20" 
+                      r="16" 
+                      strokeDasharray={`${getWeeklyProgressData('calories').weeklyPercentage * 1.005} 100.5`}
+                    />
+                  </svg>
+                  <div className="progress-percentage">
+                    {getWeeklyProgressData('calories').weeklyPercentage}%
+                  </div>
+                </div>
+              </div>
+              <div className="weekly-dots">
+                {getWeeklyProgressData('calories').weeklyData.map((completed, index) => (
+                  <div 
+                    key={index} 
+                    className={`day-dot ${completed ? 'completed' : ''} ${
+                      index === getWeeklyProgressData('calories').currentDayIndex ? 'today' : ''
+                    }`}
+                  />
+                ))}
+              </div>
+            </ProgressCard>
 
-            <NutritionCard onClick={() => navigate('/analytics')}>
-              <NutritionHeader>
-                <FaDumbbell />
-                <span>Protein</span>
-              </NutritionHeader>
-              <CircularProgress 
-                percentage={(dailyProgress.protein.current / dailyProgress.protein.target) * 100}
-              >
-                <div className="label">grams</div>
-              </CircularProgress>
-              <NutritionValues>
-                <span className="current">{Math.round(dailyProgress.protein.current)}</span>
-                <span className="target">/ {dailyProgress.protein.target}</span>
-              </NutritionValues>
-            </NutritionCard>
+            <ProgressCard>
+              <div className="progress-header">
+                <div className="metric-info">
+                  <div className="icon"><FaDumbbell /></div>
+                  <div className="label">Protein</div>
+                </div>
+                <div className="weekly-indicator">This Week</div>
+              </div>
+              <div className="progress-content">
+                <div className="values">
+                  <div className="current-value">
+                    {Math.round(getWeeklyProgressData('protein').current)}g
+                  </div>
+                  <div className="target-value">of {getWeeklyProgressData('protein').target}g</div>
+                </div>
+                <div className="mini-progress">
+                  <svg className="progress-ring" width="40" height="40">
+                    <circle 
+                      className="ring-bg" 
+                      cx="20" 
+                      cy="20" 
+                      r="16" 
+                    />
+                    <circle 
+                      className="ring-progress" 
+                      cx="20" 
+                      cy="20" 
+                      r="16" 
+                      strokeDasharray={`${getWeeklyProgressData('protein').weeklyPercentage * 1.005} 100.5`}
+                    />
+                  </svg>
+                  <div className="progress-percentage">
+                    {getWeeklyProgressData('protein').weeklyPercentage}%
+                  </div>
+                </div>
+              </div>
+              <div className="weekly-dots">
+                {getWeeklyProgressData('protein').weeklyData.map((completed, index) => (
+                  <div 
+                    key={index} 
+                    className={`day-dot ${completed ? 'completed' : ''} ${
+                      index === getWeeklyProgressData('protein').currentDayIndex ? 'today' : ''
+                    }`}
+                  />
+                ))}
+              </div>
+            </ProgressCard>
 
-            <NutritionCard onClick={() => navigate('/analytics')}>
-              <NutritionHeader>
-                <FaBreadSlice />
-                <span>Carbs</span>
-              </NutritionHeader>
-              <CircularProgress 
-                percentage={(dailyProgress.carbs.current / dailyProgress.carbs.target) * 100}
-              >
-                <div className="label">grams</div>
-              </CircularProgress>
-              <NutritionValues>
-                <span className="current">{Math.round(dailyProgress.carbs.current)}</span>
-                <span className="target">/ {dailyProgress.carbs.target}</span>
-              </NutritionValues>
-            </NutritionCard>
+            <ProgressCard>
+              <div className="progress-header">
+                <div className="metric-info">
+                  <div className="icon"><FaTint /></div>
+                  <div className="label">Water</div>
+                </div>
+                <div className="weekly-indicator">This Week</div>
+              </div>
+              <div className="progress-content">
+                <div className="values">
+                  <div className="current-value">
+                    {getWeeklyProgressData('water').current}
+                  </div>
+                  <div className="target-value">of {getWeeklyProgressData('water').target} glasses</div>
+                </div>
+                <div className="mini-progress">
+                  <svg className="progress-ring" width="40" height="40">
+                    <circle 
+                      className="ring-bg" 
+                      cx="20" 
+                      cy="20" 
+                      r="16" 
+                    />
+                    <circle 
+                      className="ring-progress" 
+                      cx="20" 
+                      cy="20" 
+                      r="16" 
+                      strokeDasharray={`${getWeeklyProgressData('water').weeklyPercentage * 1.005} 100.5`}
+                    />
+                  </svg>
+                  <div className="progress-percentage">
+                    {getWeeklyProgressData('water').weeklyPercentage}%
+                  </div>
+                </div>
+              </div>
+              <div className="weekly-dots">
+                {getWeeklyProgressData('water').weeklyData.map((completed, index) => (
+                  <div 
+                    key={index} 
+                    className={`day-dot ${completed ? 'completed' : ''} ${
+                      index === getWeeklyProgressData('water').currentDayIndex ? 'today' : ''
+                    }`}
+                  />
+                ))}
+              </div>
+            </ProgressCard>
 
-            <NutritionCard onClick={() => navigate('/analytics')}>
-              <NutritionHeader>
-                <FaTint />
-                <span>Fats</span>
-              </NutritionHeader>
-              <CircularProgress 
-                percentage={(dailyProgress.fats.current / dailyProgress.fats.target) * 100}
-              >
-                <div className="label">grams</div>
-              </CircularProgress>
-              <NutritionValues>
-                <span className="current">{Math.round(dailyProgress.fats.current)}</span>
-                <span className="target">/ {dailyProgress.fats.target}</span>
-              </NutritionValues>
-            </NutritionCard>
-          </NutritionGrid>
-        </GoalsCard>
+            <ProgressCard>
+              <div className="progress-header">
+                <div className="metric-info">
+                  <div className="icon"><FaRunning /></div>
+                  <div className="label">Exercise</div>
+                </div>
+                <div className="weekly-indicator">This Week</div>
+              </div>
+              <div className="progress-content">
+                <div className="values">
+                  <div className="current-value">
+                    {getWeeklyProgressData('exercise').current}
+                  </div>
+                  <div className="target-value">of {getWeeklyProgressData('exercise').target} minutes</div>
+                </div>
+                <div className="mini-progress">
+                  <svg className="progress-ring" width="40" height="40">
+                    <circle 
+                      className="ring-bg" 
+                      cx="20" 
+                      cy="20" 
+                      r="16" 
+                    />
+                    <circle 
+                      className="ring-progress" 
+                      cx="20" 
+                      cy="20" 
+                      r="16" 
+                      strokeDasharray={`${getWeeklyProgressData('exercise').weeklyPercentage * 1.005} 100.5`}
+                    />
+                  </svg>
+                  <div className="progress-percentage">
+                    {getWeeklyProgressData('exercise').weeklyPercentage}%
+                  </div>
+                </div>
+              </div>
+              <div className="weekly-dots">
+                {getWeeklyProgressData('exercise').weeklyData.map((completed, index) => (
+                  <div 
+                    key={index} 
+                    className={`day-dot ${completed ? 'completed' : ''} ${
+                      index === getWeeklyProgressData('exercise').currentDayIndex ? 'today' : ''
+                    }`}
+                  />
+                ))}
+              </div>
+            </ProgressCard>
+          </ProgressGrid>
+        </ProgressSection>
 
-        {/* Quick Stats Card */}
-        <QuickStatsCard>
-          <GoalsTitle style={{ marginBottom: '1.5rem' }}>
-            <FaChartLine />
-            Quick Stats
-          </GoalsTitle>
-          
-          <StatsGrid>
-            <StatItem onClick={() => navigate('/analytics')}>
-              <StatIcon>
-                <FaTrophy />
-              </StatIcon>
-              <StatContent>
-                <div className="value">{stats.completedGoals}/4</div>
-                <div className="label">Goals Completed</div>
-              </StatContent>
-            </StatItem>
+        {/* Daily Goals */}
+        <GoalsSection>
+          <h2>🎯 Today's Goals</h2>
+          <GoalsGrid>
+            {goals.map(goal => {
+              const Icon = goal.icon;
+              return (
+                <GoalCard 
+                  key={goal.id} 
+                  completed={goal.completed}
+                  onClick={() => handleGoalClick(goal.id)}
+                >
+                  <div className="goal-header">
+                    <div className="goal-title">
+                      <Icon />
+                      {goal.label}
+                    </div>
+                    <div className="check-icon">
+                      {goal.completed && <FaCheck />}
+                    </div>
+                  </div>
+                  <div className="goal-progress">
+                    <div>
+                      {goal.completed 
+                        ? '✅ Completed today! Come back tomorrow' 
+                        : 'Click to mark as complete'}
+                    </div>
+                    <div className="goal-contribution">
+                      Today's contribution: {goal.contribution || 0} {goal.unit}
+                    </div>
+                  </div>
+                </GoalCard>
+              );
+            })}
+          </GoalsGrid>
+        </GoalsSection>
+      </DashboardGrid>
 
-            <StatItem onClick={() => navigate('/meal-plan')}>
-              <StatIcon>
-                <FaUtensils />
-              </StatIcon>
-              <StatContent>
-                <div className="value">{stats.totalMeals}</div>
-                <div className="label">Meals Today</div>
-              </StatContent>
-            </StatItem>
-
-            <StatItem onClick={() => navigate('/analytics')}>
-              <StatIcon>
-                <FaWeight />
-              </StatIcon>
-              <StatContent>
-                <div className="value">{stats.weekProgress}%</div>
-                <div className="label">Week Progress</div>
-              </StatContent>
-            </StatItem>
-          </StatsGrid>
-        </QuickStatsCard>
-      </ProgressOverview>
-
-      {/* Today's Meals Section */}
-      <TodayMealsSection>
-        <SectionHeader>
-          <SectionTitle>
-            <FaUtensils />
-            Today's Meal Plan
-          </SectionTitle>
-          <ViewAllButton onClick={() => navigate('/meal-plan')}>
-            View Full Week
-            <FaArrowRight />
-          </ViewAllButton>
-        </SectionHeader>
-
-        {loading ? (
-          <EmptyMealsState>
-            <div className="icon">⏳</div>
-            <h3>Loading your meals...</h3>
-          </EmptyMealsState>
-        ) : todayMeals.length > 0 ? (
+      {/* Today's Meals */}
+      <MealsSection>
+        <h2><FaUtensils /> Today's Meal Plan</h2>
+        {todayMeals.length > 0 ? (
           <MealsGrid>
-            {['breakfast', 'lunch', 'snack', 'dinner'].map(mealType => {
+            {['breakfast', 'lunch', 'dinner', 'snack'].map(mealType => {
               const meals = groupedMeals[mealType] || [];
-              const mealTypeIcons = {
+              const mealIcons = {
                 breakfast: '🥞',
                 lunch: '🥗',
-                snack: '🍎',
-                dinner: '🍽️'
+                dinner: '🍽️',
+                snack: '🍎'
               };
 
               return (
-                <div key={mealType}>
-                  <h3 style={{ 
-                    color: 'var(--text-light)', 
-                    marginBottom: '1rem',
-                    textTransform: 'capitalize',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}>
-                    <span>{mealTypeIcons[mealType]}</span>
-                    {mealType}
+                <MealTypeSection key={mealType}>
+                  <h3>
+                    <span>{mealIcons[mealType]}</span>
+                    {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 'normal', fontSize: '0.9rem', marginLeft: '0.5rem' }}>
+                      ({meals.length} meal{meals.length !== 1 ? 's' : ''})
+                    </span>
                   </h3>
                   {meals.length > 0 ? (
                     meals.map((mealItem, index) => (
@@ -670,27 +1149,37 @@ export default function Home() {
                       />
                     ))
                   ) : (
-                    <EmptyMealsState style={{ padding: '2rem', fontSize: '0.9rem' }}>
-                      <div className="icon" style={{ fontSize: '2rem' }}>🍽️</div>
-                      <p style={{ margin: 0 }}>No {mealType} planned</p>
-                    </EmptyMealsState>
+                    <EmptyState>
+                      <div className="icon">🍽️</div>
+                      <div>No {mealType} planned</div>
+                    </EmptyState>
                   )}
-                </div>
+                </MealTypeSection>
               );
             })}
           </MealsGrid>
         ) : (
-          <EmptyMealsState>
+          <EmptyState>
             <div className="icon">🍽️</div>
             <h3>No meals planned for today</h3>
-            <p>Start your healthy journey by creating a personalized meal plan!</p>
-            <ActionButton onClick={() => navigate('/meal-plan')}>
-              <FaPlay />
+            <p>Create a meal plan to track your nutrition goals and see your progress!</p>
+            <button 
+              style={{
+                background: 'var(--primary)',
+                color: 'white',
+                border: 'none',
+                padding: '1rem 2rem',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                marginTop: '1rem'
+              }}
+              onClick={() => navigate('/meal-plan')}
+            >
               Create Meal Plan
-            </ActionButton>
-          </EmptyMealsState>
+            </button>
+          </EmptyState>
         )}
-      </TodayMealsSection>
+      </MealsSection>
     </DashboardContainer>
   );
 }

@@ -483,38 +483,38 @@ const FeatureCard = styled.div`
 const features = [
   {
     icon: <FaUtensils />,
-    title: "Meal Planning",
-    description: "Create weekly meal plans based on your dietary preferences and nutritional goals. Save time with organized planning and preparation guides.",
+    title: "Indian Meal Planning",
+    description: "Create weekly meal plans with authentic Indian recipes based on your regional preferences, dietary traditions, and nutritional goals. From North Indian thalis to South Indian filter coffee.",
     delay: "0.1s"
   },
   {
     icon: <FaBrain />,
-    title: "Smart Recommendations",
-    description: "Get meal suggestions that match your taste preferences, dietary restrictions, and nutritional requirements using intelligent algorithms.",
+    title: "Intelligent Food Recommendations",
+    description: "Get meal suggestions rooted in Indian culinary wisdom that match your taste preferences, dietary restrictions, and seasonal ingredients using intelligent algorithms.",
     delay: "0.2s"
   },
   {
     icon: <FaChartLine />,
     title: "Nutrition Tracking",
-    description: "Monitor your daily nutrient intake and track progress toward your health goals with detailed nutritional information.",
+    description: "Monitor your daily nutrient intake with detailed information about Indian foods - from dals and sabzis to rotis and rice. Track your progress toward balanced Indian nutrition.",
     delay: "0.3s"
   },
   {
     icon: <FaShieldAlt />,
     title: "Dietary Management",
-    description: "Manage food allergies, intolerances, and dietary restrictions with careful ingredient tracking and alternatives.",
+    description: "Manage food allergies, intolerances, and dietary restrictions while staying true to Indian cooking traditions. Get alternatives for ghee, paneer, wheat, and other common ingredients.",
     delay: "0.4s"
   },
   {
     icon: <FaClock />,
-    title: "Time Efficient",
-    description: "Streamline meal preparation with organized shopping lists, prep schedules, and time-saving cooking tips.",
+    title: "Ghar Ka Khana Made Easy",
+    description: "Streamline Indian meal preparation with organized grocery lists for local bazaars, prep schedules for Indian cooking, and time-saving tips for tadkas and masalas.",
     delay: "0.5s"
   },
   {
     icon: <FaHeart />,
-    title: "Health Focused",
-    description: "Build sustainable eating habits with balanced nutrition plans designed to support your long-term wellness goals.",
+    title: "Swasth Bharat Focused",
+    description: "Build sustainable eating habits with balanced Indian nutrition plans designed to support your long-term wellness goals while celebrating our food heritage.",
     delay: "0.6s"
   }
 ];
@@ -867,10 +867,10 @@ const Landing = () => {
         <Container>
           <HeroGrid>
             <HeroContent ref={heroContentRef}>
-              <h1>Smart Nutrition Planning</h1>
+              <h1>Smart Indian Nutrition</h1>
               <p>
-                Plan your meals with AI assistance. Track your nutrition goals and build healthy eating habits 
-                with personalized meal recommendations tailored to your preferences and dietary needs.
+                Plan your meals with AI assistance rooted in Indian culinary wisdom. Track your nutrition goals and build healthy eating habits 
+                with personalized desi meal recommendations tailored to your taste, region, and dietary traditions - from Punjabi tadka to Tamil rasam.
               </p>
               <ButtonGroup>
                 <Button to="/register" variant="primary" size="lg">
@@ -893,8 +893,8 @@ const Landing = () => {
                   <span className="title">Today's Meal</span>
                 </div>
                 <div className="card-content">
-                  <div className="value">Mediterranean Bowl</div>
-                  <div className="description">High protein, balanced nutrition</div>
+                  <div className="value">Dal Tadka Thali</div>
+                  <div className="description">High protein, balanced Indian nutrition</div>
                 </div>
               </FloatingCard>
 
@@ -959,24 +959,46 @@ const Landing = () => {
         </Container>
       </FeaturesSection>
       
-      <CTASection>
+      <FeaturesSection style={{ background: 'rgba(0, 181, 176, 0.03)' }}>
         <Container>
-          <CTAContent ref={ctaRef}>
-            <h2>Start Your Nutrition Journey</h2>
+          <SectionHeader>
+            <div className="badge">Indian Foods Database</div>
+            <h2>Comprehensive Indian Cuisine Database</h2>
             <p>
-              Take control of your nutrition with intelligent meal planning and personalized recommendations.
+              With our collection of over 350 authentic Indian recipes and dishes with detailed nutritional information.
             </p>
-            <ButtonGroup>
-              <Button to="/register" variant="primary" size="lg">
-                Create Account
-              </Button>
-              <Button to="/about" variant="outline" size="lg">
-                Learn More
-              </Button>
-            </ButtonGroup>
-          </CTAContent>
+          </SectionHeader>
+          
+          <FeatureGrid>
+            <FeatureCard delay="0.1s">
+              <div className="icon">🍛</div>
+              <h3>Regional Specialties</h3>
+              <p>From Punjabi rajma to Tamil sambar, discover authentic recipes from all Indian states with traditional cooking methods and nutritional profiles.</p>
+              <div className="learn-more">
+                Explore Recipes <FaArrowRight />
+              </div>
+            </FeatureCard>
+            
+            <FeatureCard delay="0.2s">
+              <div className="icon">🥘</div>
+              <h3>Street Food & Snacks</h3>
+              <p>Get nutritional information for your favorite chaat, vada pav, dosa, and other Indian street foods with healthy preparation alternatives.</p>
+              <div className="learn-more">
+                View Snacks <FaArrowRight />
+              </div>
+            </FeatureCard>
+            
+            <FeatureCard delay="0.3s">
+              <div className="icon">🌾</div>
+              <h3>Traditional Ingredients</h3>
+              <p>Learn about the nutritional benefits of traditional Indian ingredients like turmeric, cumin, fenugreek, and seasonal vegetables.</p>
+              <div className="learn-more">
+                Discover More <FaArrowRight />
+              </div>
+            </FeatureCard>
+          </FeatureGrid>
         </Container>
-      </CTASection>
+      </FeaturesSection>
     </div>
   );
 };
