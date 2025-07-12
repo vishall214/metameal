@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const MealPlan = require('../models/MealPlan');
+const Dashboard = require('../models/Dashboard');
 const asyncHandler = require('express-async-handler');
 
 // @desc    Get user's dashboard data
@@ -215,11 +216,132 @@ const addGoal = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Complete a goal for today
+// @route   POST /api/dashboard/goals/complete
+// @access  Private
+const completeGoal = asyncHandler(async (req, res) => {
+  try {
+    const { goalType } = req.body; // 'calories', 'protein', 'water', 'exercise'
+    
+    if (!['calories', 'protein', 'water', 'exercise'].includes(goalType)) {
+      return res.status(400).json({ error: 'Invalid goal type' });
+    }
+
+    // Find or create dashboard for user
+    let dashboard = await Dashboard.findOne({ user: req.user.id });
+    if (!dashboard) {
+      dashboard = new Dashboard({ 
+        user: req.user.id,
+        dailyGoals: [],
+        weeklyProgress: []
+      });
+    }
+
+    // Check if goal is already completed today
+    const todayGoals = dashboard.getTodayGoals();
+    if (todayGoals && todayGoals[goalType]) {
+      return res.status(400).json({ 
+        error: `You've already completed your ${goalType} goal today! Come back tomorrow 🌅`,
+        alreadyCompleted: true
+      });
+    }
+
+    // Get current day index (0 = Monday, 6 = Sunday)
+    const getCurrentDayIndex = () => {
+      const today = new Date();
+      const day = today.getDay();
+      return day === 0 ? 6 : day - 1; // Convert Sunday (0) to 6, Monday (1) to 0, etc.
+    };
+
+    const currentDayIndex = getCurrentDayIndex();
+
+    // Mark goal as completed for today
+    dashboard.setTodayGoal(goalType, true);
+    
+    // Update weekly progress
+    dashboard.updateWeeklyProgress(goalType, currentDayIndex, true);
+
+    await dashboard.save();
+
+    // Get updated goal data
+    const updatedTodayGoals = dashboard.getTodayGoals();
+    const weeklyProgress = dashboard.getWeeklyProgress(goalType);
+
+    res.json({
+      success: true,
+      message: `🎉 ${goalType.charAt(0).toUpperCase() + goalType.slice(1)} goal completed! Great job!`,
+      todayGoals: updatedTodayGoals,
+      weeklyProgress: weeklyProgress,
+      goalType: goalType
+    });
+
+  } catch (error) {
+    console.error('Error completing goal:', error);
+    res.status(500).json({ error: 'Failed to complete goal' });
+  }
+});
+
+// @desc    Get goal progress data
+// @route   GET /api/dashboard/goals/progress
+// @access  Private
+const getGoalProgress = asyncHandler(async (req, res) => {
+  try {
+    let dashboard = await Dashboard.findOne({ user: req.user.id });
+    
+    if (!dashboard) {
+      // Return empty progress if dashboard doesn't exist yet
+      return res.json({
+        todayGoals: { calories: false, protein: false, water: false, exercise: false },
+        weeklyProgress: {
+          calories: { current: 0, target: 7, dailyCompletions: new Array(7).fill(false) },
+          protein: { current: 0, target: 7, dailyCompletions: new Array(7).fill(false) },
+          water: { current: 0, target: 56, dailyCompletions: new Array(7).fill(false) },
+          exercise: { current: 0, target: 7, dailyCompletions: new Array(7).fill(false) }
+        }
+      });
+    }
+
+    const todayGoals = dashboard.getTodayGoals() || { 
+      calories: false, protein: false, water: false, exercise: false 
+    };
+
+    const weeklyProgress = {};
+    ['calories', 'protein', 'water', 'exercise'].forEach(metric => {
+      const progress = dashboard.getWeeklyProgress(metric);
+      if (progress) {
+        weeklyProgress[metric] = {
+          current: progress.current,
+          target: progress.target,
+          dailyCompletions: progress.dailyCompletions
+        };
+      } else {
+        const targets = { calories: 7, protein: 7, water: 56, exercise: 7 };
+        weeklyProgress[metric] = {
+          current: 0,
+          target: targets[metric],
+          dailyCompletions: new Array(7).fill(false)
+        };
+      }
+    });
+
+    res.json({
+      todayGoals,
+      weeklyProgress
+    });
+
+  } catch (error) {
+    console.error('Error getting goal progress:', error);
+    res.status(500).json({ error: 'Failed to get goal progress' });
+  }
+});
+
 module.exports = {
   getDashboard,
   updateDashboard,
   updateMealStatus,
   updateGoalStatus,
   addMeal,
-  addGoal
+  addGoal,
+  completeGoal,
+  getGoalProgress
 }; 

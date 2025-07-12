@@ -21,7 +21,10 @@ axios.interceptors.request.use(
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Only redirect to login for 401 errors that aren't for public routes
+    if (error.response?.status === 401 && 
+        !error.config.url.includes('/api/meals') && 
+        !error.config.url.includes('/library')) {
       localStorage.removeItem('user');
       window.location.href = '/login';
     }

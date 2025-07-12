@@ -4,16 +4,43 @@ const User = require('../models/User');
 // Get all meals
 const getMeals = async (req, res) => {
   try {
-    const { search } = req.query;
+    const { search, course, page = 1, limit = 20 } = req.query;
     let query = {};
     
-    if (search) {
-      query.name = { $regex: search, $options: 'i' };
+    // Handle search by name (case-insensitive)
+    if (search && search.trim()) {
+      query.name = { $regex: search.trim(), $options: 'i' };
     }
     
-    const meals = await Food.find(query);
-    res.json(meals);
+    // Handle course/category filter
+    if (course && course.trim()) {
+      query.course = course.toLowerCase().trim();
+    }
+    
+    // Calculate pagination
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+    
+    // Get total count for pagination
+    const total = await Food.countDocuments(query);
+    
+    // Get meals with pagination
+    const meals = await Food.find(query)
+      .skip(skip)
+      .limit(limitNum)
+      .sort({ createdAt: -1 }); // Sort by newest first
+    
+    // Return with pagination info
+    res.json({
+      meals,
+      total,
+      page: pageNum,
+      totalPages: Math.ceil(total / limitNum),
+      hasMore: skip + meals.length < total
+    });
   } catch (error) {
+    console.error('Error in getMeals:', error);
     res.status(500).json({ message: error.message });
   }
 };

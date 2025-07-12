@@ -26,6 +26,7 @@ import Profile from './pages/Profile';
 import Recommendations from './pages/Recommendations';
 import NotFound from './pages/NotFound';
 import FoodExplorer from './pages/FoodExplorer';
+import Library from './pages/Library';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -45,6 +46,11 @@ const PublicRoute = ({ children }) => {
   // Wait for auth state to be determined
   if (loading) {
     return <div>Loading...</div>;
+  }
+  
+  // For Library page, we want to show the sidebar
+  if (window.location.pathname === '/library') {
+    return <Layout isPublic={false}>{children}</Layout>;
   }
   
   return <Layout isPublic>{children}</Layout>;
@@ -133,6 +139,11 @@ function App() {
                 <ProtectedRoute>
                   <FoodExplorer />
                 </ProtectedRoute>
+              } />
+              <Route path="/library" element={
+                <PublicRoute>
+                  <Library />
+                </PublicRoute>
               } />
 
               {/* 404 Route */}

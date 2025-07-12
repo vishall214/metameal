@@ -4,6 +4,7 @@ import { mealPlansAPI } from '../services/api';
 import MealCard from '../components/mealcard';
 import BackButton from '../components/BackButton';
 import { FaRedo, FaSpinner } from 'react-icons/fa';
+import usePageTitle from '../utils/usePageTitle';
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -92,7 +93,7 @@ const DayCard = styled.div`
 `;
 
 const DayHeader = styled.div`
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   padding: 1.5rem 2rem;
   position: relative;
   display: flex;
@@ -252,7 +253,7 @@ const EmptyState = styled.div`
 
 const CreateButton = styled.button`
   padding: 1rem 2rem;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -287,6 +288,9 @@ const MealPlan = () => {
   const [mealPlans, setMealPlans] = useState([]);
   const [rerollingDays, setRerollingDays] = useState(new Set());
   const [creating, setCreating] = useState(false);
+  
+  // Set the page title
+  usePageTitle('Meal Plan');
 
   const fetchMealPlans = async () => {
     try {

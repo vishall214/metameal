@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import MealCard from '../components/mealcard';
 import api from '../services/api';
+import usePageTitle from '../utils/usePageTitle';
 
 // Main Dashboard Container
 const DashboardContainer = styled.div`
@@ -68,10 +69,12 @@ const DateInfo = styled.div`
 
 // Progress Section
 const ProgressSection = styled.div`
-  background: var(--card-bg);
+  background: linear-gradient(135deg, rgba(8, 35, 34, 0.95) 0%, rgba(0, 65, 62, 0.9) 100%);
   border-radius: 20px;
   padding: 1.5rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-backdrop);
+  box-shadow: var(--glass-shadow);
   
   h2 {
     color: var(--text-light);
@@ -95,10 +98,10 @@ const ProgressGrid = styled.div`
 `;
 
 const ProgressCard = styled.div`
-  background: var(--card-bg);
+  background: linear-gradient(135deg, rgba(0, 181, 176, 0.15) 0%, rgba(0, 181, 176, 0.08) 100%);
   border-radius: 12px;
   padding: 1rem;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(0, 181, 176, 0.3);
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -106,11 +109,14 @@ const ProgressCard = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  backdrop-filter: var(--glass-backdrop);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 181, 176, 0.2);
     border-color: var(--primary);
+    background: linear-gradient(135deg, rgba(0, 181, 176, 0.2) 0%, rgba(0, 181, 176, 0.12) 100%);
   }
   
   .progress-header {
@@ -138,13 +144,15 @@ const ProgressCard = styled.div`
     
     .weekly-indicator {
       font-size: 0.7rem;
-      color: var(--text-muted);
-      background: rgba(0, 181, 176, 0.1);
+      color: var(--text-light);
+      background: rgba(0, 181, 176, 0.2);
       padding: 0.25rem 0.5rem;
       border-radius: 8px;
       text-transform: uppercase;
       font-weight: 600;
       letter-spacing: 0.5px;
+      border: 1px solid rgba(0, 181, 176, 0.3);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
   }
   
@@ -237,10 +245,12 @@ const ProgressCard = styled.div`
 
 // Goals Section
 const GoalsSection = styled.div`
-  background: var(--card-bg);
+  background: linear-gradient(135deg, rgba(8, 35, 34, 0.95) 0%, rgba(0, 65, 62, 0.9) 100%);
   border-radius: 20px;
   padding: 1.5rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-backdrop);
+  box-shadow: var(--glass-shadow);
   
   h2 {
     color: var(--text-light);
@@ -265,12 +275,12 @@ const GoalsGrid = styled.div`
 
 const GoalCard = styled.button`
   background: ${props => props.completed ? 
-    'linear-gradient(135deg, rgba(0, 181, 176, 0.25), rgba(0, 181, 176, 0.15))' : 
-    'linear-gradient(135deg, rgba(0, 181, 176, 0.1), rgba(0, 181, 176, 0.05))'
+    'linear-gradient(135deg, rgba(0, 181, 176, 0.4), rgba(0, 181, 176, 0.25))' : 
+    'linear-gradient(135deg, rgba(0, 181, 176, 0.2), rgba(0, 181, 176, 0.1))'
   };
   border: ${props => props.completed ? 
     '2px solid var(--primary)' : 
-    '1px solid rgba(0, 181, 176, 0.2)'
+    '1px solid rgba(0, 181, 176, 0.4)'
   };
   border-radius: 20px;
   padding: 1.25rem;
@@ -285,6 +295,8 @@ const GoalCard = styled.button`
   flex-direction: column;
   justify-content: space-between;
   opacity: ${props => props.completed ? '0.8' : '1'};
+  backdrop-filter: var(--glass-backdrop);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   
   &::before {
     content: '';
@@ -294,27 +306,31 @@ const GoalCard = styled.button`
     right: 0;
     bottom: 0;
     background: ${props => props.completed ? 
-      'linear-gradient(135deg, rgba(0, 181, 176, 0.15), transparent)' : 
+      'linear-gradient(135deg, rgba(0, 181, 176, 0.2), transparent)' : 
       'transparent'
     };
     transition: all 0.3s ease;
   }
   
   &:hover {
-    transform: ${props => props.completed ? 'none' : 'translateY(-3px) scale(1.02)'};
-    box-shadow: ${props => props.completed ? 'none' : '0 12px 30px rgba(0, 181, 176, 0.25)'};
+    transform: ${props => props.completed ? 'none' : 'translateY(-4px) scale(1.02)'};
+    box-shadow: ${props => props.completed ? '0 4px 15px rgba(0, 0, 0, 0.2)' : '0 16px 40px rgba(0, 181, 176, 0.3)'};
     border-color: ${props => props.completed ? 'var(--primary)' : 'var(--primary)'};
+    background: ${props => props.completed ? 
+      'linear-gradient(135deg, rgba(0, 181, 176, 0.4), rgba(0, 181, 176, 0.25))' : 
+      'linear-gradient(135deg, rgba(0, 181, 176, 0.3), rgba(0, 181, 176, 0.2))'
+    };
     
     &::before {
       background: ${props => props.completed ? 
-        'linear-gradient(135deg, rgba(0, 181, 176, 0.15), transparent)' :
-        'linear-gradient(135deg, rgba(0, 181, 176, 0.2), transparent)'
+        'linear-gradient(135deg, rgba(0, 181, 176, 0.2), transparent)' :
+        'linear-gradient(135deg, rgba(0, 181, 176, 0.25), transparent)'
       };
     }
   }
   
   &:active {
-    transform: ${props => props.completed ? 'none' : 'translateY(-1px) scale(0.98)'};
+    transform: ${props => props.completed ? 'none' : 'translateY(-2px) scale(0.98)'};
   }
   
   .goal-header {
@@ -379,16 +395,17 @@ const GoalCard = styled.button`
   }
   
   .goal-contribution {
-    color: var(--primary);
+    color: var(--text-light);
     font-size: 0.8rem;
     font-weight: 700;
     opacity: 1;
-    background: rgba(0, 181, 176, 0.1);
+    background: rgba(0, 181, 176, 0.25);
     padding: 0.25rem 0.5rem;
     border-radius: 6px;
-    border: 1px solid rgba(0, 181, 176, 0.3);
+    border: 1px solid rgba(0, 181, 176, 0.4);
     text-align: center;
     margin-top: 0.2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
   
   @keyframes pulse {
@@ -399,10 +416,12 @@ const GoalCard = styled.button`
 
 // Meals Section
 const MealsSection = styled.div`
-  background: var(--card-bg);
+  background: linear-gradient(135deg, rgba(8, 35, 34, 0.95) 0%, rgba(0, 65, 62, 0.9) 100%);
   border-radius: 16px;
   padding: 2rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-backdrop);
+  box-shadow: var(--glass-shadow);
   
   h2 {
     color: var(--text-light);
@@ -451,6 +470,10 @@ const LoadingState = styled.div`
 export default function Home() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  // Set the page title
+  usePageTitle('Dashboard');
+  
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
   const [todayMeals, setTodayMeals] = useState([]);
@@ -490,6 +513,58 @@ export default function Home() {
   // Daily completion tracking with date persistence
   const [dailyCompletions, setDailyCompletions] = useState({});
   const [lastCompletionDate, setLastCompletionDate] = useState(null);
+
+  // API functions for goal progress
+  const loadGoalProgressFromAPI = async () => {
+    try {
+      const response = await api.get('/dashboard/goals/progress');
+      const { todayGoals, weeklyProgress } = response.data;
+      
+      // Update daily completions based on today's goals
+      const todayKey = getTodayDateKey();
+      setDailyCompletions({
+        calories: todayGoals.calories ? todayKey : null,
+        protein: todayGoals.protein ? todayKey : null,
+        water: todayGoals.water ? todayKey : null,
+        exercise: todayGoals.exercise ? todayKey : null
+      });
+      
+      // Update weekly progress and daily completion status
+      setWeeklyProgress(weeklyProgress);
+      
+      // Update daily completion status for visual dots
+      const dailyStatus = {};
+      Object.keys(weeklyProgress).forEach(metric => {
+        dailyStatus[metric] = weeklyProgress[metric].dailyCompletions;
+      });
+      setDailyCompletionStatus(dailyStatus);
+      
+    } catch (error) {
+      console.error('Error loading goal progress:', error);
+      // Fallback to localStorage if API fails
+      loadDailyCompletions();
+    }
+  };
+
+  const completeGoalInAPI = async (goalId) => {
+    try {
+      const response = await api.post('/dashboard/goals/complete', {
+        goalType: goalId
+      });
+      
+      if (response.data.success) {
+        return response.data;
+      } else if (response.data.alreadyCompleted) {
+        return { alreadyCompleted: true, message: response.data.error };
+      }
+    } catch (error) {
+      if (error.response?.data?.alreadyCompleted) {
+        return { alreadyCompleted: true, message: error.response.data.error };
+      }
+      console.error('Error completing goal:', error);
+      throw error;
+    }
+  };
 
   // Generate goals with current progress and contribution data
   const generateGoals = useCallback(() => {
@@ -715,7 +790,7 @@ export default function Home() {
   };
 
   // Handle goal click with daily completion tracking
-  const handleGoalClick = (goalId) => {
+  const handleGoalClick = async (goalId) => {
     // Check if goal is already completed today
     if (isGoalCompletedToday(goalId)) {
       // Goal already completed today, show message
@@ -723,95 +798,38 @@ export default function Home() {
       return;
     }
 
-    const currentDayIndex = getCurrentDayIndex();
-    const dailyTargets = getDailyTargets();
-    const todayKey = getTodayDateKey();
-    
-    // Mark goal as completed for today
-    const newCompletions = {
-      ...dailyCompletions,
-      [goalId]: todayKey
-    };
-    setDailyCompletions(newCompletions);
-    saveDailyCompletions(newCompletions);
-
-    // Show success message
-    toast.success(`🎉 ${goalId.charAt(0).toUpperCase() + goalId.slice(1)} goal completed! Great job!`);
-    
-    setGoals(prev => prev.map(goal => {
-      if (goal.id === goalId) {
-        const contributionValue = dailyTargets[goalId] || 0;
-        
-        // Update daily completion status for visual dots
-        setDailyCompletionStatus(prevDaily => ({
-          ...prevDaily,
-          [goalId]: prevDaily[goalId].map((day, index) => 
-            index === currentDayIndex ? true : day
-          )
-        }));
-        
-        // Update weekly cumulative progress
-        setWeeklyProgress(prevWeekly => ({
-          ...prevWeekly,
-          [goalId]: {
-            ...prevWeekly[goalId],
-            current: prevWeekly[goalId].current + contributionValue
-          }
-        }));
-        
-        // Update progress state with contribution tracking
-        setProgress(prevProgress => ({
-          ...prevProgress,
-          [goalId]: {
-            ...prevProgress[goalId],
-            daily: contributionValue,
-            todayContribution: contributionValue
-          }
-        }));
-        
-        // Update daily progress when goal is completed
-        if (goalId === 'water') {
-          setDailyProgress(prevProgress => ({
-            ...prevProgress,
-            water: { 
-              ...prevProgress.water, 
-              current: prevProgress.water.target
-            }
-          }));
-        } else if (goalId === 'exercise') {
-          setDailyProgress(prevProgress => ({
-            ...prevProgress,
-            exercise: { 
-              ...prevProgress.exercise, 
-              current: prevProgress.exercise.target
-            }
-          }));
-        } else if (goalId === 'calories') {
-          setDailyProgress(prevProgress => ({
-            ...prevProgress,
-            calories: { 
-              ...prevProgress.calories, 
-              current: prevProgress.calories.target
-            }
-          }));
-        } else if (goalId === 'protein') {
-          setDailyProgress(prevProgress => ({
-            ...prevProgress,
-            protein: { 
-              ...prevProgress.protein, 
-              current: prevProgress.protein.target
-            }
-          }));
-        }
-        
-        return { 
-          ...goal, 
-          completed: true,
-          contribution: contributionValue
-        };
+    try {
+      // Complete goal via API
+      const result = await completeGoalInAPI(goalId);
+      
+      if (result.alreadyCompleted) {
+        toast.info(result.message);
+        return;
       }
-      return goal;
-    }));
+      
+      if (result.success) {
+        // Show success message
+        toast.success(result.message);
+        
+        // Update local state
+        const todayKey = getTodayDateKey();
+        const newCompletions = {
+          ...dailyCompletions,
+          [goalId]: todayKey
+        };
+        setDailyCompletions(newCompletions);
+        
+        // Reload goal progress from API
+        await loadGoalProgressFromAPI();
+        
+        // Regenerate goals
+        setGoals(generateGoals());
+      }
+      
+    } catch (error) {
+      console.error('Error completing goal:', error);
+      toast.error('Failed to complete goal. Please try again.');
+    }
   };
 
   // Initialize data
@@ -820,9 +838,8 @@ export default function Home() {
       setLoading(true);
       
       try {
-        // Load daily completions from localStorage
-        const savedCompletions = loadDailyCompletions();
-        setDailyCompletions(savedCompletions);
+        // Load goal progress from API (fallback to localStorage if API fails)
+        await loadGoalProgressFromAPI();
         
         // Fetch user data
         await Promise.all([

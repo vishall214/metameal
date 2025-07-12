@@ -5,7 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TextPlugin } from 'gsap/TextPlugin';
 import Button from '../components/Button';
 import { FaUtensils, FaBrain, FaChartLine, FaShieldAlt, FaClock, FaHeart, FaArrowRight } from 'react-icons/fa';
-import Navbar from '../components/Navbar';
+import Navbar from '../components/navbar';
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger, TextPlugin);

@@ -10,26 +10,27 @@ const StyledInput = styled.input`
   width: 100%;
   font-family: var(--font-sans);
   font-size: 1rem;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.5;
-  color: var(--text-primary);
-  background: ${props => props.variant === 'glass' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.03)'};
-  border: 2px solid ${props => props.error ? 'var(--error)' : 'var(--border-light)'};
-  border-radius: var(--radius);
+  color: var(--text-light);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
   padding: 0.75rem 1rem;
-  transition: all var(--transition);
-  backdrop-filter: ${props => props.variant === 'glass' ? 'blur(20px)' : 'blur(10px)'};
+  transition: all 0.3s ease;
+  backdrop-filter: var(--glass-backdrop);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   
   ${props => props.size === 'sm' && css`
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
-    border-radius: var(--radius-sm);
+    border-radius: 8px;
   `}
   
   ${props => props.size === 'lg' && css`
     padding: 1rem 1.25rem;
     font-size: 1.125rem;
-    border-radius: var(--radius-md);
+    border-radius: 16px;
   `}
   
   ${props => props.hasIcon && css`
@@ -38,32 +39,34 @@ const StyledInput = styled.input`
   
   &::placeholder {
     color: var(--text-muted);
-    opacity: 1;
-    transition: all var(--transition);
+    opacity: 0.8;
+    transition: all 0.3s ease;
   }
   
   &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: ${props => props.error ? 'var(--error)' : 'var(--border-primary)'};
+    background: rgba(255, 255, 255, 0.15);
+    border-color: ${props => props.error ? '#ff6b6b' : 'rgba(0, 181, 176, 0.6)'};
+    box-shadow: 0 4px 12px rgba(0, 181, 176, 0.1);
   }
   
   &:focus {
     outline: none;
-    background: rgba(255, 255, 255, 0.1);
-    border-color: ${props => props.error ? 'var(--error)' : 'var(--primary)'};
-    box-shadow: 0 0 0 3px ${props => props.error ? 'rgba(239, 68, 68, 0.1)' : 'rgba(0, 181, 176, 0.1)'};
+    background: rgba(255, 255, 255, 0.12);
+    border-color: ${props => props.error ? '#ff6b6b' : 'var(--primary)'};
+    box-shadow: 0 0 0 3px ${props => props.error ? 'rgba(255, 107, 107, 0.15)' : 'rgba(0, 181, 176, 0.15)'};
+    transform: translateY(-1px);
     
     &::placeholder {
-      opacity: 0.7;
+      opacity: 0.6;
       transform: translateX(4px);
     }
   }
   
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
-    background: rgba(255, 255, 255, 0.02);
-    border-color: var(--border-light);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
   }
   
   /* Floating Label Animation */

@@ -3,23 +3,33 @@ import { createGlobalStyle } from 'styled-components';
 const GlobalStyles = createGlobalStyle`
   :root {
     --primary: #00B5B0;
-    --primary-light: #20DAD5;
+    --primary-light: #1BA5A1;
     --secondary: #1B998B;
     --accent: #34E4BE;
     --dark: #004D4A;
     --bg-dark: #0A2928;
     --text-light: #FFFFFF;
     --text-dark: #1A1A1A;
-    --text-muted: rgba(255, 255, 255, 0.6);
-    --error: #FF4D4D;
+    --text-muted: rgba(255, 255, 255, 0.65);
+    --error: #FF6B6B;
     --success: #4CAF50;
     --warning: #FFC107;
-    --input-bg: rgba(255, 255, 255, 0.07);
-    --input-border: rgba(0, 181, 176, 0.3);
-    --border: rgba(255, 255, 255, 0.1);
+    --input-bg: rgba(255, 255, 255, 0.12);
+    --input-border: rgba(0, 181, 176, 0.4);
+    --border: rgba(255, 255, 255, 0.15);
     --gradient: linear-gradient(135deg, #00B5B0 0%, #004D4A 100%);
-    --card-bg: rgba(10, 41, 40, 0.8);
-    --card-hover: rgba(0, 181, 176, 0.2);
+    --card-bg: linear-gradient(135deg, rgba(10, 41, 40, 0.85) 0%, rgba(0, 77, 74, 0.7) 100%);
+    --card-hover: rgba(0, 181, 176, 0.25);
+    
+    /* Enhanced Glassmorphic Variables with Better Contrast */
+    --glass-primary: linear-gradient(135deg, rgba(0, 181, 176, 0.3) 0%, rgba(0, 181, 176, 0.2) 100%);
+    --glass-secondary: linear-gradient(135deg, rgba(0, 181, 176, 0.2) 0%, rgba(0, 181, 176, 0.1) 100%);
+    --glass-tertiary: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    --glass-border: rgba(0, 181, 176, 0.3);
+    --glass-border-light: rgba(255, 255, 255, 0.2);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --glass-shadow-hover: 0 16px 48px rgba(0, 181, 176, 0.25);
+    --glass-backdrop: blur(25px);
   }
 
   * {
@@ -103,15 +113,47 @@ const GlobalStyles = createGlobalStyle`
 
   .card {
     background: var(--card-bg);
-    border-radius: 14px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-    border: none;
-    transition: box-shadow 0.3s, transform 0.3s;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(20px);
 
     &:hover {
-      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-      transform: translateY(-2px) scale(1.01);
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: var(--glass-shadow-hover);
+      border-color: var(--primary);
     }
+  }
+  
+  /* Global Glassmorphic Elements */
+  .glass-card {
+    background: var(--glass-primary);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    box-shadow: var(--glass-shadow);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .glass-card:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: var(--glass-shadow-hover);
+    border-color: var(--primary);
+  }
+  
+  .glass-button {
+    background: var(--glass-secondary);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    backdrop-filter: blur(20px);
+    transition: all 0.3s ease;
+  }
+  
+  .glass-button:hover {
+    background: var(--glass-primary);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--glass-shadow);
   }
 `;
 

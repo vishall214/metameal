@@ -50,58 +50,63 @@ const getButtonStyles = (variant, size) => css`
   
   /* Primary Variant */
   ${variant === 'primary' && css`
-    background: var(--primary-gradient);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     color: white;
-    box-shadow: var(--shadow);
+    border: 1px solid rgba(0, 181, 176, 0.4);
+    box-shadow: 0 8px 24px rgba(0, 181, 176, 0.25);
     
     &:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg), var(--primary-glow);
-      filter: brightness(1.1);
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 16px 40px rgba(0, 181, 176, 0.4);
+      border-color: var(--primary);
     }
     
     &:active:not(:disabled) {
-      transform: translateY(0);
-      box-shadow: var(--shadow);
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 8px 25px rgba(0, 181, 176, 0.3);
     }
   `}
   
   /* Secondary Variant */
   ${variant === 'secondary' && css`
-    background: var(--accent-gradient);
-    color: white;
-    box-shadow: var(--shadow);
+    background: linear-gradient(135deg, rgba(0, 181, 176, 0.2) 0%, rgba(0, 181, 176, 0.1) 100%);
+    color: var(--text-light);
+    border: 1px solid rgba(0, 181, 176, 0.4);
+    backdrop-filter: var(--glass-backdrop);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     
     &:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
-      filter: brightness(1.1);
+      background: linear-gradient(135deg, rgba(0, 181, 176, 0.3) 0%, rgba(0, 181, 176, 0.2) 100%);
+      border-color: var(--primary);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 25px rgba(0, 181, 176, 0.25);
     }
     
     &:active:not(:disabled) {
-      transform: translateY(0);
-      box-shadow: var(--shadow);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 181, 176, 0.2);
     }
   `}
   
   /* Outline Variant */
   ${variant === 'outline' && css`
-    background: transparent;
+    background: var(--card-bg);
     color: var(--primary);
-    border: 2px solid var(--primary);
-    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 181, 176, 0.4);
+    backdrop-filter: var(--glass-backdrop);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     
     &:hover:not(:disabled) {
-      background: rgba(0, 181, 176, 0.1);
-      border-color: var(--primary-light);
-      color: var(--primary-light);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-md);
+      background: linear-gradient(135deg, rgba(0, 181, 176, 0.15) 0%, rgba(0, 181, 176, 0.1) 100%);
+      border-color: var(--primary);
+      color: var(--primary);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 25px rgba(0, 181, 176, 0.2);
     }
     
     &:active:not(:disabled) {
-      transform: translateY(0);
-      background: rgba(0, 181, 176, 0.2);
+      transform: translateY(-1px);
+      background: rgba(0, 181, 176, 0.25);
     }
   `}
   

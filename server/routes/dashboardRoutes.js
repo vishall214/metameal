@@ -6,7 +6,9 @@ const {
   updateMealStatus,
   updateGoalStatus,
   addMeal,
-  addGoal
+  addGoal,
+  completeGoal,
+  getGoalProgress
 } = require('../controllers/dashboardController');
 
 // Base route: /api/dashboard
@@ -22,5 +24,7 @@ router.put('/meals/:mealId', updateMealStatus);
 // Goal routes
 router.post('/goals', addGoal);
 router.put('/goals/:goalId', updateGoalStatus);
+router.post('/goals/complete', completeGoal);
+router.get('/goals/progress', getGoalProgress);
 
 module.exports = router; 

@@ -15,32 +15,22 @@ const {
   searchMeals
 } = require('../controllers/mealController');
 
-// TODO: Import meal controller functions once created
-// const { getMeals, getMealById, createMeal } = require('../controllers/mealController');
-
-// Protected routes
-router.use(protect);
-
-// Search route
+// Public routes (no authentication required)
 router.get('/search', searchMeals);
-
-// Base routes
-router.route('/')
-  .get(getMeals)
-  .post(createMeal);
-
-router.route('/:id')
-  .get(getMeal)
-  .put(updateMeal)
-  .delete(deleteMeal);
-
-// Category and tag routes
 router.get('/category/:category', getMealsByCategory);
 router.get('/tag/:tag', getMealsByTag);
+router.get('/random', getRandomMeal);
+router.get('/:id', getMeal);
+router.get('/', getMeals);
 
-// Meal generation and recommendation routes
+// Protected routes (authentication required)
+router.use(protect);
+
+// Routes that require authentication
+router.post('/', createMeal);
+router.put('/:id', updateMeal);
+router.delete('/:id', deleteMeal);
 router.get('/generate/plan', generateMeals);
 router.get('/recommendations', getRecommendedMeals);
-router.get('/random', getRandomMeal);
 
 module.exports = router;
