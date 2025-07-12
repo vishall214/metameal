@@ -246,18 +246,16 @@ const addGoal = asyncHandler(async (req, res) => {
 const completeGoal = asyncHandler(async (req, res) => {
   try {
     const { goalType } = req.body; // 'calories', 'protein', 'water', 'exercise'
-    
+
     if (!['calories', 'protein', 'water', 'exercise'].includes(goalType)) {
       return res.status(400).json({ error: 'Invalid goal type' });
     }
 
-    // Get user data for goal calculations
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Get smart calculated goals
     let calculatedGoals;
     try {
       calculatedGoals = await GoalCalculationService.calculateUserGoals(req.user.id);
@@ -271,10 +269,9 @@ const completeGoal = asyncHandler(async (req, res) => {
       };
     }
 
-    // Find or create dashboard for user
     let dashboard = await Dashboard.findOne({ user: req.user.id });
     if (!dashboard) {
-      dashboard = new Dashboard({ 
+      dashboard = new Dashboard({
         user: req.user.id,
         weeklyProgress: {
           calories: 0,
@@ -292,25 +289,46 @@ const completeGoal = asyncHandler(async (req, res) => {
       await dashboard.save();
     }
 
-    // Check if goal is already completed today
     const todayGoals = dashboard.getTodaysGoals();
     if (todayGoals && todayGoals[goalType]) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: `You've already completed your ${goalType} goal today! Come back tomorrow 🌅`,
         alreadyCompleted: true
       });
     }
 
-    // Mark goal as completed for today
     dashboard.setTodaysGoal(goalType, true);
-    
-    // Calculate today's contribution based on smart goals
-    const todaysContribution = calculatedGoals[goalType] || 0;
-    
-    // Update weekly progress
-    await dashboard.updateWeeklyProgress(goalType, todaysContribution);
 
+    // ✅ Use daily contribution for exercise instead of weekly total
+    let todaysContribution;
+    if (goalType === 'exercise') {
+      todaysContribution = Math.round((calculatedGoals.exercise || 210) / 7);
+    } else {
+      todaysContribution = calculatedGoals[goalType] || 0;
+    }
+
+    dashboard.updateWeeklyProgress(goalType, todaysContribution);
     await dashboard.save();
+
+    // ✅ Store progress in user.progress[]
+    const todayKey = new Date().toDateString();
+    const userProgress = user.progress || [];
+
+    let todayRecord = userProgress.find(p => p.date === todayKey);
+    if (!todayRecord) {
+      todayRecord = {
+        date: todayKey,
+        calories: false,
+        protein: false,
+        water: false,
+        exercise: false
+      };
+      userProgress.push(todayRecord);
+    }
+    todayRecord[goalType] = true;
+
+    user.progress = userProgress;
+    await user.save();
 
     res.json({
       success: true,
@@ -332,13 +350,11 @@ const completeGoal = asyncHandler(async (req, res) => {
 // @access  Private
 const getGoalProgress = asyncHandler(async (req, res) => {
   try {
-    // Get user data for goal calculations
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Get smart calculated goals
     let calculatedGoals;
     try {
       calculatedGoals = await GoalCalculationService.calculateUserGoals(req.user.id);
@@ -350,7 +366,7 @@ const getGoalProgress = asyncHandler(async (req, res) => {
         carbs: user.preferences?.carbGoal || 250,
         fats: user.preferences?.fatGoal || 65,
         water: 8,
-        exercise: 210, // weekly
+        exercise: 210,
         calculated: false
       };
     }
@@ -358,7 +374,6 @@ const getGoalProgress = asyncHandler(async (req, res) => {
     let dashboard = await Dashboard.findOne({ user: req.user.id });
     
     if (!dashboard) {
-      // Create new dashboard
       dashboard = new Dashboard({ 
         user: req.user.id,
         weeklyProgress: {
@@ -377,14 +392,24 @@ const getGoalProgress = asyncHandler(async (req, res) => {
       await dashboard.save();
     }
 
-    // Initialize weekly progress if needed
     await dashboard.initializeWeeklyProgress();
 
-    const todayGoals = dashboard.getTodaysGoals() || { 
+    let todayGoals = dashboard.getTodaysGoals() || { 
       calories: false, protein: false, water: false, exercise: false 
     };
 
-    // Get weekly targets using smart calculations
+    // ✅ Override with user.progress record for today
+    const todayKey = new Date().toDateString();
+    const todayDbRecord = user.progress?.find(p => p.date === todayKey);
+    if (todayDbRecord) {
+      todayGoals = {
+        calories: todayDbRecord.calories || false,
+        protein: todayDbRecord.protein || false,
+        water: todayDbRecord.water || false,
+        exercise: todayDbRecord.exercise || false
+      };
+    }
+
     const weeklyTargets = await dashboard.getWeeklyTargets();
 
     const weeklyProgress = {
@@ -410,12 +435,11 @@ const getGoalProgress = asyncHandler(async (req, res) => {
       }
     };
 
-    // Today's potential contributions based on smart calculations
     const todayContributions = {
       calories: calculatedGoals.calories,
       protein: calculatedGoals.protein,
       water: calculatedGoals.water,
-      exercise: calculatedGoals.exercise / 7 // Convert weekly to daily
+      exercise: Math.round(calculatedGoals.exercise / 7)
     };
 
     res.json({

@@ -55,6 +55,12 @@ const dashboardSchema = new mongoose.Schema({
       default: false
     }
   },
+  weeklyProgress: {
+  calories: { type: Number, default: 0 },
+  protein: { type: Number, default: 0 },
+  water: { type: Number, default: 0 },
+  exercise: { type: Number, default: 0 }
+},
   weeklyCompletions: {
     calories: {
       type: [Boolean],
@@ -131,42 +137,37 @@ dashboardSchema.methods.getDailyTargets = async function() {
 };
 
 // Method to update weekly progress with smart goal calculation
-dashboardSchema.methods.updateWeeklyProgress = async function(metric, contribution) {
-  // Check if it's a new week and reset if needed
-  const now = new Date();
-  const currentWeekStart = new Date(now);
-  currentWeekStart.setDate(now.getDate() - now.getDay());
-  currentWeekStart.setHours(0, 0, 0, 0); // Normalize to midnight
-  
-  if (!this.weekStartDate) {
-    // No week start date set, initialize with current week
-    this.weekStartDate = currentWeekStart;
-  }
-  
-  const normalizedWeekStart = new Date(this.weekStartDate);
-  normalizedWeekStart.setHours(0, 0, 0, 0); // Normalize to midnight
-  
-  if (normalizedWeekStart.getTime() < currentWeekStart.getTime()) {
-    console.log('🔄 New week detected in updateWeeklyProgress, resetting');
-    this.weeklyProgress = {
-      calories: 0,
-      protein: 0,
-      water: 0,
-      exercise: 0
-    };
-    this.weekStartDate = currentWeekStart;
-  }
-  
-  // Add contribution to weekly progress
-  console.log(`📈 Adding ${contribution} to ${metric}. Before: ${this.weeklyProgress[metric]}`);
-  this.weeklyProgress[metric] = (this.weeklyProgress[metric] || 0) + contribution;
-  console.log(`📈 After: ${this.weeklyProgress[metric]}`);
-  
-  // Mark as modified to ensure mongoose saves it
+dashboardSchema.methods.updateWeeklyProgress = function (goalType, contribution) {
+  // Ensure the structure exists
+  this.weeklyProgress = this.weeklyProgress || {
+    calories: 0,
+    protein: 0,
+    water: 0,
+    exercise: 0
+  };
+  this.weeklyCompletions = this.weeklyCompletions || {
+    calories: [false, false, false, false, false, false, false],
+    protein: [false, false, false, false, false, false, false],
+    water: [false, false, false, false, false, false, false],
+    exercise: [false, false, false, false, false, false, false]
+  };
+
+  // Add contribution
+  this.weeklyProgress[goalType] += contribution;
+
+  // Mark today's day as completed
+  const today = new Date();
+  const dayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1; // Monday = 0, Sunday = 6
+  this.weeklyCompletions[goalType][dayIndex] = true;
+
+  // ✅ Mark fields as modified
   this.markModified('weeklyProgress');
-  
-  return await this.save();
+  this.markModified('weeklyCompletions');
+
+  // ❌ Do not call save() here
 };
+
+
 
 // Method to initialize weekly progress with smart calculations
 dashboardSchema.methods.initializeWeeklyProgress = async function() {
@@ -235,20 +236,35 @@ dashboardSchema.methods.getWeeklyCompletions = function(metric) {
 };
 
 // Method to set today's goal completion
-dashboardSchema.methods.setTodaysGoal = async function(goalType, completed) {
+dashboardSchema.methods.setTodaysGoal = function (goalType, completed) {
   console.log(`🎯 Setting ${goalType} goal to ${completed}`);
+
+  this.todaysGoals = this.todaysGoals || {
+    calories: false,
+    protein: false,
+    water: false,
+    exercise: false
+  };
+
   this.todaysGoals[goalType] = completed;
+
   // Update weeklyCompletions for the current day
   const now = new Date();
-  let dayIndex = now.getDay(); // 0=Sunday, 6=Saturday
-  dayIndex = dayIndex === 0 ? 6 : dayIndex - 1; // Convert to Mon-Sun (0=Monday, 6=Sunday)
-  if (!this.weeklyCompletions) this.weeklyCompletions = {};
-  if (!this.weeklyCompletions[goalType]) this.weeklyCompletions[goalType] = [false, false, false, false, false, false, false];
+  let dayIndex = now.getDay(); // 0 = Sunday, 6 = Saturday
+  dayIndex = dayIndex === 0 ? 6 : dayIndex - 1; // Convert to Mon-Sun (0 = Monday)
+
+  this.weeklyCompletions = this.weeklyCompletions || {};
+  this.weeklyCompletions[goalType] = this.weeklyCompletions[goalType] || [false, false, false, false, false, false, false];
+
   this.weeklyCompletions[goalType][dayIndex] = completed;
+
+  // Ensure Mongoose tracks the updates
   this.markModified('todaysGoals');
   this.markModified('weeklyCompletions');
-  return await this.save();
+
+  // ❌ Do not call save() here — controller handles it
 };
+
 
 // Method to get progress percentage for a metric
 dashboardSchema.methods.getProgressPercentage = function(metric, userGoals = {}) {
