@@ -58,6 +58,15 @@ const userSchema = new mongoose.Schema({
     carbGoal: Number,
     fatGoal: Number
   },
+  progress: [
+  {
+    date: { type: String }, // e.g. "2025-07-12"
+    calories: { type: Boolean, default: false },
+    protein: { type: Boolean, default: false },
+    water: { type: Boolean, default: false },
+    exercise: { type: Boolean, default: false }
+  }
+  ],
   isVerified: {
     type: Boolean,
     default: false

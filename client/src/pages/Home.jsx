@@ -516,72 +516,59 @@ export default function Home() {
   const [lastCompletionDate, setLastCompletionDate] = useState(null);
 
   // API functions for goal progress
-  const loadGoalProgressFromAPI = async () => {
-    try {
-      const response = await api.get('/dashboard/goals/progress');
-      const { todayGoals, weeklyProgress, todayContributions, userGoals } = response.data;
-      
-      console.log('[Dashboard] API Response:', response.data);
-      
-      // Update user profile with goals from API
-      setUserProfile(prev => ({
-        ...prev,
-        dailyCalories: userGoals.dailyCalories,
-        dailyProtein: userGoals.dailyProtein,
-        dailyWater: userGoals.dailyWater,
-        weeklyExercise: userGoals.weeklyExercise,
-        dailyExercise: Math.round(userGoals.weeklyExercise / 7)
-      }));
-      
-      // Update daily completions based on today's goals
-      const todayKey = getTodayDateKey();
-      setDailyCompletions({
-        calories: todayGoals.calories ? todayKey : null,
-        protein: todayGoals.protein ? todayKey : null,
-        water: todayGoals.water ? todayKey : null,
-        exercise: todayGoals.exercise ? todayKey : null
-      });
-      
-      // Update weekly progress
-      setWeeklyProgress(weeklyProgress);
-      
-      // Update progress state with today's contributions
-      setProgress({
-        calories: { 
-          daily: todayGoals.calories ? todayContributions.calories : 0, 
-          todayContribution: todayContributions.calories 
-        },
-        protein: { 
-          daily: todayGoals.protein ? todayContributions.protein : 0, 
-          todayContribution: todayContributions.protein 
-        },
-        water: { 
-          daily: todayGoals.water ? todayContributions.water : 0, 
-          todayContribution: todayContributions.water 
-        },
-        exercise: { 
-          daily: todayGoals.exercise ? todayContributions.exercise : 0, 
-          todayContribution: todayContributions.exercise 
-        }
-      });
-      
-      // Update daily completion status for visual dots
-      const dailyStatus = {};
-      Object.keys(weeklyProgress).forEach(metric => {
-        // Add fallback for missing dailyCompletions
-        dailyStatus[metric] = weeklyProgress[metric]?.dailyCompletions || [false, false, false, false, false, false, false];
-      });
-      setDailyCompletionStatus(dailyStatus);
-      
-      console.log('[Dashboard] State updated successfully');
-      
-    } catch (error) {
-      console.error('Error loading goal progress:', error);
-      toast.error('Failed to load goal progress. Using default values.');
-      // Fallback to localStorage if API fails
-      loadDailyCompletions();
-    }
-  };
+const loadGoalProgressFromAPI = async () => {
+  try {
+    const response = await api.get('/dashboard/goals/progress');
+    const { todayGoals, weeklyProgress, todayContributions, userGoals } = response.data;
+
+    console.log('[Dashboard] API Response:', response.data);
+
+    // ✅ Update user profile with smart goals
+    setUserProfile(prev => ({
+      ...prev,
+      dailyCalories: userGoals.dailyCalories,
+      dailyProtein: userGoals.dailyProtein,
+      dailyWater: userGoals.dailyWater,
+      weeklyExercise: userGoals.weeklyExercise,
+      dailyExercise: Math.round(userGoals.weeklyExercise / 7)
+    }));
+
+    // ✅ Update progress state
+    setProgress({
+      calories: { 
+        daily: todayGoals.calories ? todayContributions.calories : 0,
+        todayContribution: Math.round(todayContributions.calories)
+      },
+      protein: {
+        daily: todayGoals.protein ? todayContributions.protein : 0,
+        todayContribution: Math.round(todayContributions.protein)
+      },
+      water: {
+        daily: todayGoals.water ? todayContributions.water : 0,
+        todayContribution: Math.round(todayContributions.water)
+      },
+      exercise: {
+        daily: todayGoals.exercise ? todayContributions.exercise : 0,
+        todayContribution: Math.round(todayContributions.exercise)
+      }
+    });
+
+    // ✅ Update weekly progress (force re-render)
+    setWeeklyProgress({ ...weeklyProgress });
+
+    // ✅ Update dailyCompletionStatus for dot markers
+    const dailyStatus = {};
+    Object.keys(weeklyProgress).forEach(metric => {
+      dailyStatus[metric] = weeklyProgress[metric]?.dailyCompletions || [false, false, false, false, false, false, false];
+    });
+    setDailyCompletionStatus(dailyStatus);
+
+  } catch (error) {
+    console.error('Error loading goal progress:', error);
+    toast.error('Failed to load goal progress. Please try again later.');
+  }
+};
+
 
   const completeGoalInAPI = async (goalId) => {
     try {
@@ -610,64 +597,65 @@ export default function Home() {
   };
 
   // Generate goals with current progress and contribution data
-  const generateGoals = useCallback(() => {
-    if (!userProfile) return [];
-    
-    return [
-      {
-        id: 'calories',
-        label: 'Reach Daily Calories',
-        title: 'Daily Calories',
-        description: 'Meet your calorie target',
-        target: userProfile.dailyCalories || 2000,
-        current: progress.calories.daily,
-        unit: 'kcal',
-        icon: FaFire,
-        color: 'var(--primary)',
-        completed: isGoalCompletedToday('calories'),
-        contribution: progress.calories.todayContribution || 0
-      },
-      {
-        id: 'protein',
-        label: 'Meet Protein Goal',
-        title: 'Daily Protein',
-        description: 'Fuel your muscle growth',
-        target: userProfile.dailyProtein || 150,
-        current: progress.protein.daily,
-        unit: 'g',
-        icon: FaDumbbell,
-        color: '#FF6B6B',
-        completed: isGoalCompletedToday('protein'),
-        contribution: progress.protein.todayContribution || 0
-      },
-      {
-        id: 'water',
-        label: `Drink ${userProfile.dailyWater || 8} Glasses Water`,
-        title: 'Daily Water',
-        description: 'Stay hydrated',
-        target: userProfile.dailyWater || 8,
-        current: progress.water.daily,
-        unit: 'glasses',
-        icon: FaTint,
-        color: '#4ECDC4',
-        completed: isGoalCompletedToday('water'),
-        contribution: progress.water.todayContribution || 0
-      },
-      {
-        id: 'exercise',
-        label: `Exercise ${Math.round((userProfile.weeklyExercise || 210) / 7)} Minutes`,
-        title: 'Daily Exercise',
-        description: 'Active lifestyle',
-        target: Math.round((userProfile.weeklyExercise || 210) / 7),
-        current: progress.exercise.daily,
-        unit: 'min',
-        icon: FaRunning,
-        color: '#45B7D1',
-        completed: isGoalCompletedToday('exercise'),
-        contribution: progress.exercise.todayContribution || 0
-      }
-    ];
-  }, [userProfile, progress, dailyCompletions]);
+const generateGoals = useCallback(() => {
+  if (!userProfile) return [];
+
+  return [
+    {
+      id: 'calories',
+      label: 'Reach Daily Calories',
+      title: 'Daily Calories',
+      description: 'Meet your calorie target',
+      target: userProfile.dailyCalories || 2000,
+      current: progress.calories.daily,
+      unit: 'kcal',
+      icon: FaFire,
+      color: 'var(--primary)',
+      completed: isGoalCompletedToday('calories'),
+      contribution: Math.round(progress.calories.todayContribution || 0)
+    },
+    {
+      id: 'protein',
+      label: 'Meet Protein Goal',
+      title: 'Daily Protein',
+      description: 'Fuel your muscle growth',
+      target: userProfile.dailyProtein || 150,
+      current: progress.protein.daily,
+      unit: 'g',
+      icon: FaDumbbell,
+      color: '#FF6B6B',
+      completed: isGoalCompletedToday('protein'),
+      contribution: Math.round(progress.protein.todayContribution || 0)
+    },
+    {
+      id: 'water',
+      label: `Drink ${userProfile.dailyWater || 8} Glasses Water`,
+      title: 'Daily Water',
+      description: 'Stay hydrated',
+      target: userProfile.dailyWater || 8,
+      current: progress.water.daily,
+      unit: 'glasses',
+      icon: FaTint,
+      color: '#4ECDC4',
+      completed: isGoalCompletedToday('water'),
+      contribution: Math.round(progress.water.todayContribution || 0)
+    },
+    {
+      id: 'exercise',
+      label: `Exercise ${Math.round((userProfile.weeklyExercise || 210) / 7)} Minutes`,
+      title: 'Daily Exercise',
+      description: 'Active lifestyle',
+      target: Math.round((userProfile.weeklyExercise || 210) / 7),
+      current: progress.exercise.daily,
+      unit: 'min',
+      icon: FaRunning,
+      color: '#45B7D1',
+      completed: isGoalCompletedToday('exercise'),
+      contribution: Math.round(progress.exercise.todayContribution || 0)
+    }
+  ];
+}, [userProfile, progress]);
+
 
   // Get today's date info
   const getTodayInfo = () => {
@@ -689,10 +677,9 @@ export default function Home() {
   };
 
   // Check if goal is completed today
-  const isGoalCompletedToday = (goalId) => {
-    const todayKey = getTodayDateKey();
-    return dailyCompletions[goalId] === todayKey;
-  };
+const isGoalCompletedToday = (goalId) => {
+  return progress[goalId]?.daily > 0;
+};
 
   // Load daily completions from localStorage
   const loadDailyCompletions = () => {
@@ -768,49 +755,9 @@ export default function Home() {
 
   // Fetch user profile from database
   const fetchUserProfile = async () => {
-    try {
-      const response = await api.get('/profile');
-      const userData = response.data;
-      
-      setUserProfile(userData);
-      
-      // Update daily progress targets based on user preferences (but keep current at 0)
-      if (userData.preferences) {
-        const calorieGoal = userData.preferences.calorieGoal || 2000;
-        const proteinGoal = userData.preferences.proteinGoal || 120;
-        
-        setDailyProgress(prev => ({
-          calories: { 
-            current: 0, // Always start at 0
-            target: calorieGoal
-          },
-          protein: { 
-            current: 0, // Always start at 0
-            target: proteinGoal
-          },
-          water: { current: 0, target: 8 }, // Always start at 0
-          exercise: { current: 0, target: 30 } // Always start at 0
-        }));
-        
-        // Update weekly targets based on daily targets
-        setWeeklyProgress(prev => ({
-          calories: { ...prev.calories, target: calorieGoal * 7 },
-          protein: { ...prev.protein, target: proteinGoal * 7 },
-          water: { ...prev.water, target: 8 * 7 },
-          exercise: { ...prev.exercise, target: 30 * 7 }
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      toast.error('Failed to load user profile. Using default values.');
-      // Set default values on error
-      setDailyProgress({
-        calories: { current: 0, target: 2000 },
-        protein: { current: 0, target: 120 },
-        water: { current: 0, target: 8 },
-        exercise: { current: 0, target: 30 }
-      });
-    }
+    const response = await api.get('/profile');
+    const userData = response.data;
+    setUserProfile(userData);
   };
 
   // Fetch today's meals (just for display, doesn't affect progress)
@@ -838,76 +785,54 @@ export default function Home() {
   const [goalCompletionLoading, setGoalCompletionLoading] = useState(false);
 
   // Handle goal click with daily completion tracking
-  const handleGoalClick = async (goalId) => {
-    // Prevent multiple clicks
-    if (goalCompletionLoading) {
-      toast.info('Please wait, processing your goal completion...');
+const handleGoalClick = async (goalId) => {
+  if (goalCompletionLoading) {
+    toast.info('Please wait, processing your goal completion...');
+    return;
+  }
+
+  if (isGoalCompletedToday(goalId)) {
+    toast.info(`You've already completed your ${goalId} goal today! Come back tomorrow 🌅`);
+    return;
+  }
+
+  setGoalCompletionLoading(true);
+
+  try {
+    const result = await completeGoalInAPI(goalId);
+
+    if (result.alreadyCompleted) {
+      toast.info(result.message);
       return;
     }
 
-    // Check if goal is already completed today
-    if (isGoalCompletedToday(goalId)) {
-      // Goal already completed today, show message
-      toast.info(`You've already completed your ${goalId} goal today! Come back tomorrow 🌅`);
-      return;
+    if (result.success) {
+      toast.success(result.message);
+
+      // ✅ Fetch updated progress and goal completions
+      await loadGoalProgressFromAPI();
+
+      // ✅ Force UI goal list to re-render with new state
+      setGoals(generateGoals()); // ← ADD THIS LINE
     }
 
-    setGoalCompletionLoading(true);
+  } catch (error) {
+    console.error('Error completing goal:', error);
 
-    try {
-      // Complete goal via API
-      const result = await completeGoalInAPI(goalId);
-      
-      if (result.alreadyCompleted) {
-        toast.info(result.message);
-        return;
-      }
-      
-      if (result.success) {
-        // Show success message
-        toast.success(result.message);
-        
-        // Update local state
-        const todayKey = getTodayDateKey();
-        const newCompletions = {
-          ...dailyCompletions,
-          [goalId]: todayKey
-        };
-        setDailyCompletions(newCompletions);
-        
-        // Update progress state with today's contribution
-        setProgress(prev => ({
-          ...prev,
-          [goalId]: {
-            daily: result.todaysContribution || prev[goalId].todayContribution,
-            todayContribution: result.todaysContribution || prev[goalId].todayContribution
-          }
-        }));
-        
-        // Reload goal progress from API to get updated weekly progress
-        await loadGoalProgressFromAPI();
-        
-        // Regenerate goals
-        setGoals(generateGoals());
-      }
-      
-    } catch (error) {
-      console.error('Error completing goal:', error);
-      
-      // Provide specific error messages
-      if (error.response?.status === 400) {
-        toast.error(error.response.data.error || 'Invalid goal completion request');
-      } else if (error.response?.status === 401) {
-        toast.error('Please log in again to complete goals');
-      } else if (error.response?.status === 500) {
-        toast.error('Server error. Please try again in a moment.');
-      } else {
-        toast.error('Failed to complete goal. Please check your connection and try again.');
-      }
-    } finally {
-      setGoalCompletionLoading(false);
+    if (error.response?.status === 400) {
+      toast.error(error.response.data.error || 'Invalid goal completion request');
+    } else if (error.response?.status === 401) {
+      toast.error('Please log in again to complete goals');
+    } else if (error.response?.status === 500) {
+      toast.error('Server error. Please try again in a moment.');
+    } else {
+      toast.error('Failed to complete goal. Please check your connection and try again.');
     }
-  };
+
+  } finally {
+    setGoalCompletionLoading(false);
+  }
+};
 
   // Initialize data
   useEffect(() => {
