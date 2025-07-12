@@ -45,10 +45,7 @@ const userSchema = new mongoose.Schema({
       type: String,
       enum: ['veg', 'non-veg', 'diabetes', 'thyroid', 'high BP']
     }],
-    dietaryRestrictions: [String],
-    allergies: [String],
     goals: [String],
-    healthConditions: [String],
     avatar: { type: String }
   },
   preferences: {

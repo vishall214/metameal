@@ -2,171 +2,298 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup } from 'react-leaflet';
 import { toast } from 'react-toastify';
-import styled from 'styled-components';
-import { FaGlobe, FaMapMarkerAlt, FaUtensils, FaStar, FaLeaf, FaFire, FaClock, FaHeart, FaEye } from 'react-icons/fa';
+import styled, { keyframes } from 'styled-components';
+import { 
+  FaGlobe, 
+  FaMapMarkerAlt, 
+  FaUtensils, 
+  FaStar, 
+  FaLeaf, 
+  FaFire, 
+  FaClock, 
+  FaHeart, 
+  FaEye,
+  FaFilter,
+  FaTrophy,
+  FaBookmark,
+  FaShareAlt,
+  FaArrowRight,
+  FaMagic,
+  FaBook
+} from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import Loading from '../components/Loading';
 import usePageTitle from '../utils/usePageTitle';
 import { indiaGeoData } from '../data/indiaGeoData';
 import '../utils/leafletConfig';
 
-// Styled components
-const PageContainer = styled.div`
-  padding: 2rem;
-  max-width: 1400px;
-  margin          <div className="map-legend">
-            <div className="legend-item">
-              <div className="legend-circle" style={{ 
-                width: '10px', 
-                height: '10px', 
-                borderRadius: '50%',
-                background: 'rgba(148, 163, 184, 0.6)',
-                border: '2px solid rgba(100, 116, 139, 0.8)'
-              }}></div>
-              <span>Coming Soon</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-circle" style={{ 
-                width: '16px', 
-                height: '16px', 
-                borderRadius: '50%',
-                background: '#14b8a6',
-                border: '2px solid #ffffff'
-              }}></div>
-              <span>Available Recipes</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-circle" style={{ 
-                width: '24px', 
-                height: '24px', 
-                borderRadius: '50%',
-                background: '#00B5B0',
-                border: '3px solid #ffffff'
-              }}></div>
-              <span>Selected State</span>
-            </div>
-          </div>`;
-
-// Styled Components
-const Title = styled.h1`
-  font-size: 2.5rem;
-  color: var(--text-light);
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  
-  svg {
-    color: var(--primary);
+// Modern animations
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 `;
 
-const ExplorerHeader = styled.div`
-  background: var(--bg-light);
+const shimmer = keyframes`
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+`;
+
+const float = keyframes`
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+`;
+
+const pulse = keyframes`
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+`;
+
+const glow = keyframes`
+  0%, 100% { box-shadow: 0 0 20px rgba(0, 181, 176, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(0, 181, 176, 0.6); }
+`;
+
+// Main container with enhanced styling
+const PageContainer = styled.div`
+  min-height: 100vh;
+  background: var(--bg-gradient);
   padding: 1.5rem;
-  border-radius: 12px;
+  max-width: 1300px;
+  margin: 0 auto;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(0, 181, 176, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255, 107, 107, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+`;
+
+// Enhanced glassmorphic header with animations
+const Header = styled.div`
+  text-align: center;
   margin-bottom: 2rem;
-  border: 1px solid var(--border);
+  animation: ${fadeInUp} 0.8s ease-out;
+  
+  h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    background: linear-gradient(135deg, var(--primary), #06d6a0, #ffd166);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    
+    svg {
+      color: var(--primary);
+      font-size: 1.5rem;
+    }
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+    color: var(--text-muted);
+    max-width: 500px;
+    margin: 0 auto 1rem;
+    line-height: 1.5;
+  }
+`;
+
+// Enhanced ExplorerHeader with glassmorphic design
+const ExplorerHeader = styled.div`
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  padding: 1.5rem;
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  animation: ${fadeInUp} 0.8s ease-out 0.2s both;
   
   p {
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: var(--text-light);
     margin-bottom: 1.5rem;
     line-height: 1.6;
+    text-align: center;
   }
   
   .stats {
-    display: flex;
-    gap: 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
     
     .stat {
       display: flex;
       flex-direction: column;
       align-items: center;
+      padding: 0.75rem;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.1);
+      }
+      
+      .icon {
+        font-size: 1.2rem;
+        color: var(--primary);
+        margin-bottom: 0.25rem;
+      }
       
       .number {
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: var(--primary);
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary), #06d6a0);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.25rem;
       }
       
       .label {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         color: var(--text-muted);
+        text-align: center;
+        font-weight: 500;
       }
     }
   }
 `;
 
+// Enhanced grid layout with responsive design
 const ExplorerGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.2fr 0.8fr;
   gap: 2rem;
+  align-items: start;
   
-  @media (max-width: 1024px) {
+  @media (max-width: 1200px) {
     grid-template-columns: 1fr;
+  }
+  
+  @media (max-width: 768px) {
+    gap: 1.5rem;
   }
 `;
 
+// Enhanced map section with compact design
 const MapSection = styled.div`
-  background: var(--bg-light);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
   padding: 1.5rem;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  animation: ${fadeInUp} 0.8s ease-out 0.4s both;
   
   .map-header {
     margin-bottom: 1rem;
+    text-align: center;
     
     h2 {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       color: var(--text-light);
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 0.5rem;
+      margin-bottom: 0.25rem;
+      font-weight: 600;
+      
+      svg {
+        color: var(--primary);
+        font-size: 1.2rem;
+      }
+    }
+    
+    .map-subtitle {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
     }
   }
   
-  .map-legend {
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
-    margin-top: 1rem;
+  .map-container {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      
-      .legend-color,
-      .legend-circle {
-        width: 16px;
-        height: 16px;
-        border-radius: 4px;
-        flex-shrink: 0;
-      }
-      
-      .legend-circle {
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      
-      span {
-        font-size: 0.9rem;
-        color: var(--text-muted);
-      }
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      pointer-events: none;
     }
   }
 `;
 
+// Enhanced state info panel with compact design
 const StateInfoPanel = styled.div`
-  background: var(--bg-light);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
   padding: 1.5rem;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   height: 100%;
   overflow-y: auto;
+  animation: ${fadeInUp} 0.8s ease-out 0.6s both;
+  
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 181, 176, 0.5);
+    border-radius: 2px;
+    
+    &:hover {
+      background: rgba(0, 181, 176, 0.8);
+    }
+  }
   
   .no-selection {
     display: flex;
@@ -175,23 +302,26 @@ const StateInfoPanel = styled.div`
     justify-content: center;
     height: 100%;
     text-align: center;
-    padding: 2rem;
+    padding: 2rem 1rem;
     
     .icon {
-      font-size: 3rem;
+      font-size: 2.5rem;
       color: var(--primary);
       margin-bottom: 1rem;
     }
     
     h3 {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       color: var(--text-light);
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
     }
     
     p {
       color: var(--text-muted);
       line-height: 1.6;
+      font-size: 0.95rem;
+      max-width: 280px;
     }
   }
   
@@ -200,30 +330,53 @@ const StateInfoPanel = styled.div`
     align-items: center;
     margin-bottom: 1.5rem;
     gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     
     .state-flag {
       font-size: 2rem;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
     }
     
     .state-info {
       flex: 1;
       
       h3 {
-        font-size: 1.8rem;
-        color: var(--text-light);
+        font-size: 1.6rem;
+        background: linear-gradient(135deg, var(--text-light), var(--primary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
         margin-bottom: 0.5rem;
+        font-weight: 700;
+        line-height: 1.2;
       }
       
       .state-stats {
         display: flex;
         gap: 1rem;
+        flex-wrap: wrap;
         
         .stat {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          font-size: 0.9rem;
+          gap: 0.375rem;
+          font-size: 0.85rem;
           color: var(--text-muted);
+          padding: 0.375rem 0.75rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          
+          svg {
+            color: var(--primary);
+            font-size: 0.8rem;
+          }
+          
+          .value {
+            font-weight: 600;
+            color: var(--text-light);
+          }
         }
       }
     }
@@ -233,8 +386,11 @@ const StateInfoPanel = styled.div`
     color: var(--text-light);
     line-height: 1.6;
     margin-bottom: 1.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border);
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.95rem;
   }
   
   .famous-dishes {
@@ -245,20 +401,49 @@ const StateInfoPanel = styled.div`
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      font-weight: 600;
+      
+      svg {
+        color: var(--primary);
+        font-size: 1.1rem;
+      }
+    }
+    
+    .dishes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    
+    .loading-dishes {
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--text-muted);
+      
+      .loading-icon {
+        font-size: 1.5rem;
+        color: var(--primary);
+        margin-bottom: 0.75rem;
+      }
     }
   }
 `;
 
+// Enhanced glassmorphic dish card with compact design
 const DishCard = styled.div`
-  background: var(--card-bg);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
   border-radius: 12px;
-  padding: 1.25rem;
-  margin-bottom: 1.25rem;
-  border: 1px solid var(--border);
-  transition: transform 0.2s;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  animation: ${fadeInUp} 0.6s ease-out;
   
   &:hover {
     transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   }
   
   .dish-header {
@@ -267,99 +452,176 @@ const DishCard = styled.div`
     align-items: flex-start;
     margin-bottom: 0.75rem;
     
-    .dish-name {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: var(--text-light);
-      margin-bottom: 0.25rem;
+    .dish-title {
+      flex: 1;
+      
+      .dish-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 0.25rem;
+        line-height: 1.3;
+      }
+      
+      .dish-origin {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        
+        svg {
+          color: var(--primary);
+          font-size: 0.7rem;
+        }
+      }
+    }
+    
+    .dish-badges {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      align-items: flex-end;
     }
     
     .dish-rating {
       display: flex;
       align-items: center;
       gap: 0.25rem;
-      color: #FFD700;
-      font-size: 0.9rem;
+      background: rgba(255, 215, 0, 0.1);
+      padding: 0.25rem 0.5rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      
+      .stars {
+        color: #FFD700;
+        font-size: 0.7rem;
+      }
+      
+      .rating-text {
+        font-size: 0.7rem;
+        color: var(--text-light);
+        font-weight: 600;
+      }
     }
     
     .dish-type {
-      font-size: 0.8rem;
+      font-size: 0.7rem;
       padding: 0.25rem 0.5rem;
-      border-radius: 4px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       gap: 0.25rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      
+      svg {
+        font-size: 0.6rem;
+      }
       
       &.vegetarian {
         background: rgba(46, 204, 113, 0.15);
         color: #2ecc71;
+        border: 1px solid rgba(46, 204, 113, 0.3);
       }
       
       &.non-vegetarian {
         background: rgba(231, 76, 60, 0.15);
         color: #e74c3c;
+        border: 1px solid rgba(231, 76, 60, 0.3);
       }
     }
   }
   
   .dish-description {
     color: var(--text-muted);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     line-height: 1.5;
     margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   
   .dish-stats {
-    display: flex;
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
     margin-bottom: 1rem;
     
     .stat {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 0.25rem;
-      font-size: 0.9rem;
-      color: var(--text-muted);
+      padding: 0.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      
+      .icon {
+        font-size: 0.9rem;
+        color: var(--primary);
+        margin-bottom: 0.125rem;
+      }
       
       .value {
         font-weight: 600;
-        color: var(--primary);
+        color: var(--text-light);
+        font-size: 0.85rem;
+        margin-bottom: 0.125rem;
+      }
+      
+      .label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-align: center;
       }
     }
   }
   
   .dish-actions {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.5rem;
     
     .action-btn {
       flex: 1;
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--primary), #06d6a0);
       color: white;
       border: none;
-      border-radius: 6px;
-      padding: 0.5rem;
-      font-size: 0.9rem;
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
-      transition: background 0.2s;
+      gap: 0.375rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 181, 176, 0.3);
       
       &:hover {
-        background: var(--primary-dark);
+        background: linear-gradient(135deg, #06d6a0, var(--primary));
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 181, 176, 0.4);
       }
       
       &.secondary {
-        background: transparent;
-        border: 1px solid var(--border);
-        color: var(--text-muted);
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-light);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         
         &:hover {
-          background: var(--bg-dark);
-          color: var(--text-light);
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
         }
+      }
+      
+      svg {
+        font-size: 0.8rem;
       }
     }
   }
@@ -685,15 +947,6 @@ const stateData = {
     description: "Andhra cuisine is famous for its spicy and tangy flavors. Rice is the staple, and the cuisine extensively uses tamarind, red chilies, and various spices to create bold, flavorful dishes.",
     dishes: [
       {
-        name: "Hyderabadi Biryani",
-        description: "Aromatic rice dish layered with marinated meat, cooked in dum style with saffron and spices.",
-        type: "non-vegetarian",
-        rating: 4.9,
-        calories: "580",
-        cookTime: "120 min",
-        difficulty: "Hard"
-      },
-      {
         name: "Gongura Mutton",
         description: "Tangy mutton curry cooked with sorrel leaves (gongura), a signature Andhra delicacy.",
         type: "non-vegetarian",
@@ -710,6 +963,15 @@ const stateData = {
         calories: "220",
         cookTime: "30 min",
         difficulty: "Medium"
+      },
+      {
+        name: "Andhra Fish Curry",
+        description: "Spicy and tangy fish curry made with tamarind, red chilies, and coconut, a coastal Andhra specialty.",
+        type: "non-vegetarian",
+        rating: 4.6,
+        calories: "320",
+        cookTime: "40 min",
+        difficulty: "Medium"
       }
     ]
   },
@@ -718,6 +980,15 @@ const stateData = {
     flag: "🍚",
     description: "Telangana cuisine is characterized by its rustic flavors and extensive use of millets, sorghum, and rice. The cuisine features both vegetarian and non-vegetarian dishes with bold, spicy flavors.",
     dishes: [
+      {
+        name: "Hyderabadi Biryani",
+        description: "Aromatic rice dish layered with marinated meat, cooked in dum style with saffron and spices.",
+        type: "non-vegetarian",
+        rating: 4.9,
+        calories: "580",
+        cookTime: "120 min",
+        difficulty: "Hard"
+      },
       {
         name: "Sarva Pindi",
         description: "Savory pancake made with rice flour and spices, often enjoyed as breakfast or snack.",
@@ -1517,26 +1788,41 @@ export default function FoodExplorer() {
 
   return (
     <PageContainer>
-      <Title>
-        <FaGlobe /> Discover India's Culinary Heritage
-      </Title>
+      <Header>
+        <h1>
+          <FaGlobe /> Discover India's Culinary Heritage
+        </h1>
+        <p className="subtitle">
+          Embark on a culinary journey across 28 Indian states. Discover authentic regional dishes, 
+          traditional cooking methods, and the rich cultural heritage that makes each cuisine extraordinary.
+        </p>
+      </Header>
       
       <ExplorerHeader>
         <p>
-          Embark on a culinary journey across all 28 Indian states. Discover authentic regional dishes, traditional cooking methods, and the rich cultural heritage that makes each state's cuisine unique and extraordinary.
+          From the spicy curries of Tamil Nadu to the sweet delicacies of Bengal, each region offers 
+          a unique palette of flavors shaped by centuries of tradition, local ingredients, and cultural exchange.
         </p>
         <div className="stats">
           <div className="stat">
+            <FaMapMarkerAlt className="icon" />
             <span className="number">28</span>
-            <span className="label">States Available</span>
+            <span className="label">States & UTs</span>
           </div>
           <div className="stat">
+            <FaTrophy className="icon" />
             <span className="number">84+</span>
-            <span className="label">Authentic Dishes</span>
+            <span className="label">Signature Dishes</span>
           </div>
           <div className="stat">
-            <span className="number">28</span>
-            <span className="label">Regional Cuisines</span>
+            <FaMagic className="icon" />
+            <span className="number">5</span>
+            <span className="label">Culinary Regions</span>
+          </div>
+          <div className="stat">
+            <FaHeart className="icon" />
+            <span className="number">∞</span>
+            <span className="label">Flavors to Explore</span>
           </div>
         </div>
       </ExplorerHeader>
@@ -1544,7 +1830,8 @@ export default function FoodExplorer() {
       <ExplorerGrid>
         <MapSection>
           <div className="map-header">
-            <h2><FaGlobe /> India's Culinary Map</h2>
+            <h2><FaMapMarkerAlt /> India's Interactive Culinary Map</h2>
+            <p className="map-subtitle">Click on any state to explore its unique culinary traditions</p>
           </div>
           
           <MapContainer 
@@ -1632,7 +1919,7 @@ export default function FoodExplorer() {
               </div>
               <h3>Select a State to Explore</h3>
               <p>
-                Click on any state on the interactive map to discover its unique cuisine, traditional dishes, and culinary heritage. Each state offers a different taste of India's rich food culture.
+                Click on any state on the interactive map to discover its unique cuisine, traditional dishes, and culinary heritage.
               </p>
             </div>
           ) : (
@@ -1660,57 +1947,72 @@ export default function FoodExplorer() {
 
               <div className="famous-dishes">
                 <h4><FaUtensils /> Signature Dishes</h4>
-                {currentStateData.dishes.map((dish, index) => (
-                  <DishCard key={index}>
-                    <div className="dish-header">
-                      <div>
-                        <div className="dish-name">{dish.name}</div>
-                        <div className="dish-rating">
-                          <FaStar />
-                          {dish.rating}/5
+                <div className="dishes-grid">
+                  {currentStateData.dishes.map((dish, index) => (
+                    <DishCard key={index}>
+                      <div className="dish-header">
+                        <div className="dish-title">
+                          <div className="dish-name">{dish.name}</div>
+                          <div className="dish-origin">
+                            <FaMapMarkerAlt />
+                            {currentStateData.name}
+                          </div>
+                        </div>
+                        <div className="dish-badges">
+                          <div className="dish-rating">
+                            <div className="stars">
+                              <FaStar />
+                            </div>
+                            <span className="rating-text">{dish.rating}</span>
+                          </div>
+                          <div className={`dish-type ${dish.type}`}>
+                            <FaLeaf />
+                            {dish.type === 'vegetarian' ? 'VEG' : 'NON-VEG'}
+                          </div>
                         </div>
                       </div>
-                      <div className={`dish-type ${dish.type}`}>
-                        <FaLeaf />
-                        {dish.type}
+                      
+                      <div className="dish-description">
+                        {dish.description}
                       </div>
-                    </div>
-                    
-                    <div className="dish-description">
-                      {dish.description}
-                    </div>
-                    
-                    <div className="dish-stats">
-                      <div className="stat">
-                        <FaFire />
-                        <span className="value">{dish.calories}</span> cal
+                      
+                      <div className="dish-stats">
+                        <div className="stat">
+                          <FaFire className="icon" />
+                          <span className="value">{dish.calories}</span>
+                          <span className="label">calories</span>
+                        </div>
+                        <div className="stat">
+                          <FaClock className="icon" />
+                          <span className="value">{dish.cookTime}</span>
+                          <span className="label">cook time</span>
+                        </div>
+                        <div className="stat">
+                          <FaTrophy className="icon" />
+                          <span className="value">{dish.difficulty}</span>
+                          <span className="label">level</span>
+                        </div>
                       </div>
-                      <div className="stat">
-                        <FaClock />
-                        <span className="value">{dish.cookTime}</span>
+                      
+                      <div className="dish-actions">
+                        <button 
+                          className="action-btn"
+                          onClick={() => handleViewRecipe(dish)}
+                        >
+                          <FaBook />
+                          View Recipe
+                        </button>
+                        <button 
+                          className="action-btn secondary"
+                          onClick={() => handleAddToFavourites(dish)}
+                        >
+                          <FaHeart />
+                          Save
+                        </button>
                       </div>
-                      <div className="stat">
-                        <FaUtensils />
-                        <span className="value">{dish.difficulty}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="dish-actions">
-                      <button 
-                        className="action-btn"
-                        onClick={() => handleAddToFavourites(dish)}
-                      >
-                        <FaHeart /> Add to Favourites
-                      </button>
-                      <button 
-                        className="action-btn secondary"
-                        onClick={() => handleViewRecipe(dish)}
-                      >
-                        <FaEye /> Recipe
-                      </button>
-                    </div>
-                  </DishCard>
-                ))}
+                    </DishCard>
+                  ))}
+                </div>
               </div>
             </>
           )}

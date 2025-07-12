@@ -77,6 +77,7 @@ const Navbar = () => {
           {user ? (
             <>
               <NavLink to="/meal-plan">Meal Plan</NavLink>
+              <NavLink to="/food-explorer">Food Explorer</NavLink>
               <NavLink to="/recommendations">Recommendations</NavLink>
               <NavLink to="/quiz">Quiz</NavLink>
               {/* No Logout or Sign Up button for authenticated users */}
@@ -84,6 +85,7 @@ const Navbar = () => {
           ) : (
             <>
               <NavLink to="/about">About Us</NavLink>
+              <NavLink to="/food-explorer">Food Explorer</NavLink>
               <AuthButton onClick={() => navigate('/login')}>
                 Sign In
               </AuthButton>

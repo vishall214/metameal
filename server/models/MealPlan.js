@@ -40,8 +40,6 @@ const mealPlanSchema = new mongoose.Schema({
     }
   }],
   preferences: {
-    dietaryRestrictions: [String],
-    allergies: [String],
     calorieGoal: Number,
     proteinGoal: Number,
     carbGoal: Number,

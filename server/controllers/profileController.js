@@ -42,8 +42,6 @@ const updateProfile = asyncHandler(async (req, res) => {
     weight,
     gender,
     activityLevel,
-    dietaryRestrictions,
-    allergies,
     goals
   } = req.body;
 
@@ -56,8 +54,6 @@ const updateProfile = asyncHandler(async (req, res) => {
   if (weight) user.profile.weight = weight;
   if (gender) user.profile.gender = gender;
   if (activityLevel) user.profile.activityLevel = activityLevel;
-  if (dietaryRestrictions) user.profile.dietaryRestrictions = dietaryRestrictions;
-  if (allergies) user.profile.allergies = allergies;
   if (goals) user.profile.goals = goals;
 
   // Recalculate BMR and calorie goals if weight, height, age, or activity level changed

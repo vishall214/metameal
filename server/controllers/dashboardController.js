@@ -44,19 +44,19 @@ const getDashboard = asyncHandler(async (req, res) => {
       },
       calories: {
         consumed: totalCalories,
-        goal: user.profile?.calorieGoal || 2000
+        goal: user.preferences?.calorieGoal || 2000
       },
       protein: {
         consumed: totalProtein,
-        goal: user.profile?.proteinGoal || 120
+        goal: user.preferences?.proteinGoal || 120
       },
       carbs: {
         consumed: totalCarbs,
-        goal: user.profile?.carbGoal || 250
+        goal: user.preferences?.carbGoal || 250
       },
       fats: {
         consumed: totalFats,
-        goal: user.profile?.fatGoal || 65
+        goal: user.preferences?.fatGoal || 65
       },
       todayMeals: todayMeals,
       totalMealsPlanned: mealPlans.length > 0 ? mealPlans[0].meals?.length || 0 : 0,

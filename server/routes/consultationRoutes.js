@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middlewares/auth');
+const { protect } = require('../middlewares/authMiddleware');
 
 // TODO: Import consultation controller functions once created
 // const { getConsultations, bookConsultation } = require('../controllers/consultationController');

@@ -195,7 +195,9 @@ const generateMeals = async (req, res) => {
       fatGoal
     } = user.preferences;
 
-    const dietaryRestrictions = user.profile.dietaryRestrictions || [];
+    // Get user dietary filters
+    const userFilters = user.profile?.filters || [];
+    const dietaryRestrictions = userFilters.filter(f => ['veg', 'non-veg'].includes(f));
 
     // Calculate meal distribution
     const mealDistribution = {
@@ -248,7 +250,9 @@ const getRecommendedMeals = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const { dietaryRestrictions } = user.profile;
+    // Get user dietary filters
+    const userFilters = user.profile?.filters || [];
+    const dietaryRestrictions = userFilters.filter(f => ['veg', 'non-veg'].includes(f));
     const { calorieGoal } = user.preferences;
 
     // Find meals that match user's preferences
