@@ -1,44 +1,5 @@
 const mongoose = require('mongoose');
-
-const dailyGoalSchema = new mongoose.Schema({
-  date: {
-    type: String,
-    required: true
-  },
-  calories: {
-    type: Boolean,
-    default: false
-  },
-  protein: {
-    type: Boolean,
-    default: false
-  },
-  water: {
-    type: Boolean,
-    default: false
-  },
-  exercise: {
-    type: Boolean,
-    default: false
-  }
-});
-
-const weeklyProgressSchema = new mongoose.Schema({
-  metric: {
-    type: String,
-    enum: ['calories', 'protein', 'water', 'exercise'],
-    required: true
-  },
-  current: {
-    type: Number,
-    default: 0
-  },
-  target: {
-    type: Number,
-    required: true
-  },
-  dailyCompletions: [Boolean] // Array of 7 booleans for each day of the week
-});
+const GoalCalculationService = require('../services/GoalCalculationService');
 
 const dashboardSchema = new mongoose.Schema({
   user: {
@@ -47,11 +8,70 @@ const dashboardSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  dailyGoals: [dailyGoalSchema],
-  weeklyProgress: [weeklyProgressSchema],
-  lastUpdated: {
+  weeklyProgress: {
+    calories: {
+      type: Number,
+      default: 0
+    },
+    protein: {
+      type: Number,
+      default: 0
+    },
+    water: {
+      type: Number,
+      default: 0
+    },
+    exercise: {
+      type: Number,
+      default: 0
+    }
+  },
+  weekStartDate: {
     type: Date,
-    default: Date.now
+    default: () => {
+      const now = new Date();
+      const dayOfWeek = now.getDay();
+      const diff = now.getDate() - dayOfWeek;
+      const weekStart = new Date(now.setDate(diff));
+      weekStart.setHours(0, 0, 0, 0); // Normalize to midnight
+      return weekStart;
+    }
+  },
+  todaysGoals: {
+    calories: {
+      type: Boolean,
+      default: false
+    },
+    protein: {
+      type: Boolean,
+      default: false
+    },
+    water: {
+      type: Boolean,
+      default: false
+    },
+    exercise: {
+      type: Boolean,
+      default: false
+    }
+  },
+  weeklyCompletions: {
+    calories: {
+      type: [Boolean],
+      default: [false, false, false, false, false, false, false]
+    },
+    protein: {
+      type: [Boolean],
+      default: [false, false, false, false, false, false, false]
+    },
+    water: {
+      type: [Boolean],
+      default: [false, false, false, false, false, false, false]
+    },
+    exercise: {
+      type: [Boolean],
+      default: [false, false, false, false, false, false, false]
+    }
   }
 }, {
   timestamps: true
@@ -59,80 +79,208 @@ const dashboardSchema = new mongoose.Schema({
 
 // Index for efficient queries
 dashboardSchema.index({ user: 1 });
-dashboardSchema.index({ 'dailyGoals.date': 1 });
 
-// Method to get today's goal completion
-dashboardSchema.methods.getTodayGoals = function() {
-  const today = new Date().toDateString();
-  return this.dailyGoals.find(goal => goal.date === today) || null;
+// Method to get user-specific weekly targets with smart calculations
+dashboardSchema.methods.getWeeklyTargets = async function() {
+  try {
+    // Get fresh calculated goals
+    const calculatedGoals = await GoalCalculationService.calculateUserGoals(this.user);
+    
+    return {
+      calories: calculatedGoals.calories * 7,
+      protein: calculatedGoals.protein * 7,
+      water: calculatedGoals.water * 7,
+      exercise: calculatedGoals.exercise // Already weekly
+    };
+  } catch (error) {
+    console.error('Error calculating weekly targets:', error);
+    // Fallback to basic calculation
+    const User = require('./User');
+    const user = await User.findById(this.user);
+    
+    return {
+      calories: (user?.preferences?.calorieGoal || 2000) * 7,
+      protein: (user?.preferences?.proteinGoal || 120) * 7,
+      water: 56, // 8 glasses × 7 days
+      exercise: 210 // 30 minutes × 7 days
+    };
+  }
+};
+
+// Method to get daily targets with smart calculations
+dashboardSchema.methods.getDailyTargets = async function() {
+  try {
+    const calculatedGoals = await GoalCalculationService.calculateUserGoals(this.user);
+    return calculatedGoals;
+  } catch (error) {
+    console.error('Error calculating daily targets:', error);
+    // Fallback to user preferences
+    const User = require('./User');
+    const user = await User.findById(this.user);
+    
+    return {
+      calories: user?.preferences?.calorieGoal || 2000,
+      protein: user?.preferences?.proteinGoal || 120,
+      carbs: user?.preferences?.carbGoal || 250,
+      fats: user?.preferences?.fatGoal || 65,
+      water: 8,
+      exercise: 30,
+      calculated: false
+    };
+  }
+};
+
+// Method to update weekly progress with smart goal calculation
+dashboardSchema.methods.updateWeeklyProgress = async function(metric, contribution) {
+  // Check if it's a new week and reset if needed
+  const now = new Date();
+  const currentWeekStart = new Date(now);
+  currentWeekStart.setDate(now.getDate() - now.getDay());
+  currentWeekStart.setHours(0, 0, 0, 0); // Normalize to midnight
+  
+  if (!this.weekStartDate) {
+    // No week start date set, initialize with current week
+    this.weekStartDate = currentWeekStart;
+  }
+  
+  const normalizedWeekStart = new Date(this.weekStartDate);
+  normalizedWeekStart.setHours(0, 0, 0, 0); // Normalize to midnight
+  
+  if (normalizedWeekStart.getTime() < currentWeekStart.getTime()) {
+    console.log('🔄 New week detected in updateWeeklyProgress, resetting');
+    this.weeklyProgress = {
+      calories: 0,
+      protein: 0,
+      water: 0,
+      exercise: 0
+    };
+    this.weekStartDate = currentWeekStart;
+  }
+  
+  // Add contribution to weekly progress
+  console.log(`📈 Adding ${contribution} to ${metric}. Before: ${this.weeklyProgress[metric]}`);
+  this.weeklyProgress[metric] = (this.weeklyProgress[metric] || 0) + contribution;
+  console.log(`📈 After: ${this.weeklyProgress[metric]}`);
+  
+  // Mark as modified to ensure mongoose saves it
+  this.markModified('weeklyProgress');
+  
+  return await this.save();
+};
+
+// Method to initialize weekly progress with smart calculations
+dashboardSchema.methods.initializeWeeklyProgress = async function() {
+  // Check if it's a new week
+  const now = new Date();
+  const currentWeekStart = new Date(now);
+  currentWeekStart.setDate(now.getDate() - now.getDay());
+  currentWeekStart.setHours(0, 0, 0, 0); // Normalize to midnight
+  
+  if (!this.weekStartDate) {
+    // No week start date set, initialize with current week
+    this.weekStartDate = currentWeekStart;
+    console.log('📅 Initializing week start date:', this.weekStartDate);
+    await this.save();
+    return this;
+  }
+  
+  const normalizedWeekStart = new Date(this.weekStartDate);
+  normalizedWeekStart.setHours(0, 0, 0, 0); // Normalize to midnight
+  
+  // Only reset if it's actually a new week (different week start date)
+  if (normalizedWeekStart.getTime() < currentWeekStart.getTime()) {
+    console.log('🔄 New week detected, resetting weekly progress');
+    this.weeklyProgress = {
+      calories: 0,
+      protein: 0,
+      water: 0,
+      exercise: 0
+    };
+    this.weekStartDate = currentWeekStart;
+    // Reset today's goals for new week
+    this.todaysGoals = {
+      calories: false,
+      protein: false,
+      water: false,
+      exercise: false
+    };
+    // Reset weeklyCompletions for new week
+    this.weeklyCompletions = {
+      calories: [false, false, false, false, false, false, false],
+      protein: [false, false, false, false, false, false, false],
+      water: [false, false, false, false, false, false, false],
+      exercise: [false, false, false, false, false, false, false]
+    };
+    this.markModified('weeklyCompletions');
+    await this.save();
+  } else {
+    console.log('📊 Same week, keeping existing progress:', this.weeklyProgress);
+  }
+  
+  return this;
+};
+
+// Method to get today's goal completion status
+dashboardSchema.methods.getTodaysGoals = function() {
+  return this.todaysGoals;
+};
+
+// Method to get weekly completion status for a metric
+dashboardSchema.methods.getWeeklyCompletions = function(metric) {
+  // Return array of 7 boolean values for Mon-Sun
+  if (this.weeklyCompletions && this.weeklyCompletions[metric]) {
+    return this.weeklyCompletions[metric];
+  }
+  return [false, false, false, false, false, false, false];
 };
 
 // Method to set today's goal completion
-dashboardSchema.methods.setTodayGoal = function(goalType, completed) {
-  const today = new Date().toDateString();
-  let todayGoals = this.dailyGoals.find(goal => goal.date === today);
-  
-  if (!todayGoals) {
-    todayGoals = { date: today };
-    this.dailyGoals.push(todayGoals);
-  }
-  
-  const goalIndex = this.dailyGoals.findIndex(goal => goal.date === today);
-  this.dailyGoals[goalIndex][goalType] = completed;
-  this.lastUpdated = new Date();
+dashboardSchema.methods.setTodaysGoal = async function(goalType, completed) {
+  console.log(`🎯 Setting ${goalType} goal to ${completed}`);
+  this.todaysGoals[goalType] = completed;
+  // Update weeklyCompletions for the current day
+  const now = new Date();
+  let dayIndex = now.getDay(); // 0=Sunday, 6=Saturday
+  dayIndex = dayIndex === 0 ? 6 : dayIndex - 1; // Convert to Mon-Sun (0=Monday, 6=Sunday)
+  if (!this.weeklyCompletions) this.weeklyCompletions = {};
+  if (!this.weeklyCompletions[goalType]) this.weeklyCompletions[goalType] = [false, false, false, false, false, false, false];
+  this.weeklyCompletions[goalType][dayIndex] = completed;
+  this.markModified('todaysGoals');
+  this.markModified('weeklyCompletions');
+  return await this.save();
 };
 
-// Method to get weekly progress for a metric
-dashboardSchema.methods.getWeeklyProgress = function(metric) {
-  return this.weeklyProgress.find(progress => progress.metric === metric);
+// Method to get progress percentage for a metric
+dashboardSchema.methods.getProgressPercentage = function(metric, userGoals = {}) {
+  const targets = this.getWeeklyTargets(userGoals);
+  const current = this.weeklyProgress[metric] || 0;
+  const target = targets[metric];
+  return Math.min(Math.round((current / target) * 100), 100);
 };
 
-// Method to update weekly progress
-dashboardSchema.methods.updateWeeklyProgress = function(metric, dayIndex, completed) {
-  let progress = this.weeklyProgress.find(p => p.metric === metric);
+// Method to check if week needs reset
+dashboardSchema.methods.checkAndResetWeek = function() {
+  const now = new Date();
+  const currentWeekStart = new Date(now);
+  currentWeekStart.setDate(now.getDate() - now.getDay());
   
-  if (!progress) {
-    // Initialize weekly progress if it doesn't exist
-    const targets = {
-      calories: 7, // 7 days of calorie goals
-      protein: 7,  // 7 days of protein goals  
-      water: 56,   // 8 glasses × 7 days
-      exercise: 7  // 7 days of exercise
+  if (!this.weekStartDate || this.weekStartDate < currentWeekStart) {
+    this.weeklyProgress = {
+      calories: 0,
+      protein: 0,
+      water: 0,
+      exercise: 0
     };
-    
-    progress = {
-      metric,
-      current: 0,
-      target: targets[metric],
-      dailyCompletions: new Array(7).fill(false)
+    this.weekStartDate = currentWeekStart;
+    this.todaysGoals = {
+      calories: false,
+      protein: false,
+      water: false,
+      exercise: false
     };
-    this.weeklyProgress.push(progress);
-    progress = this.weeklyProgress[this.weeklyProgress.length - 1];
+    return true;
   }
-  
-  const progressIndex = this.weeklyProgress.findIndex(p => p.metric === metric);
-  const wasCompleted = this.weeklyProgress[progressIndex].dailyCompletions[dayIndex];
-  
-  // Update the daily completion
-  this.weeklyProgress[progressIndex].dailyCompletions[dayIndex] = completed;
-  
-  // Update current count
-  if (completed && !wasCompleted) {
-    this.weeklyProgress[progressIndex].current += 1;
-  } else if (!completed && wasCompleted) {
-    this.weeklyProgress[progressIndex].current -= 1;
-  }
-  
-  this.lastUpdated = new Date();
-};
-
-// Method to reset weekly progress (called at start of new week)
-dashboardSchema.methods.resetWeeklyProgress = function() {
-  this.weeklyProgress.forEach(progress => {
-    progress.current = 0;
-    progress.dailyCompletions = new Array(7).fill(false);
-  });
-  this.lastUpdated = new Date();
+  return false;
 };
 
 module.exports = mongoose.model('Dashboard', dashboardSchema);

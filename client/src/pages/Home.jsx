@@ -484,14 +484,15 @@ export default function Home() {
     exercise: { current: 0, target: 30 }
   });
   
-  // Weekly progress tracking - now tracks actual accumulated values
+  // Weekly progress tracking - initialized with defaults, updated from API
   const [weeklyProgress, setWeeklyProgress] = useState({
-    calories: { current: 0, target: 14000 }, // 2000 * 7 days
-    protein: { current: 0, target: 840 },    // 120 * 7 days
-    water: { current: 0, target: 56 },       // 8 * 7 days
-    exercise: { current: 0, target: 210 }    // 30 * 7 days
+    calories: { current: 0, target: 0, dailyCompletions: [false, false, false, false, false, false, false] },
+    protein: { current: 0, target: 0, dailyCompletions: [false, false, false, false, false, false, false] },
+    water: { current: 0, target: 0, dailyCompletions: [false, false, false, false, false, false, false] },
+    exercise: { current: 0, target: 0, dailyCompletions: [false, false, false, false, false, false, false] }
   });
   
+  // Removed duplicate weekly progress fetch. Only loadGoalProgressFromAPI will update weeklyProgress.
   // Track daily completion status for visual dots
   const [dailyCompletionStatus, setDailyCompletionStatus] = useState({
     calories: [false, false, false, false, false, false, false], // Mon-Sun
@@ -518,7 +519,19 @@ export default function Home() {
   const loadGoalProgressFromAPI = async () => {
     try {
       const response = await api.get('/dashboard/goals/progress');
-      const { todayGoals, weeklyProgress } = response.data;
+      const { todayGoals, weeklyProgress, todayContributions, userGoals } = response.data;
+      
+      console.log('[Dashboard] API Response:', response.data);
+      
+      // Update user profile with goals from API
+      setUserProfile(prev => ({
+        ...prev,
+        dailyCalories: userGoals.dailyCalories,
+        dailyProtein: userGoals.dailyProtein,
+        dailyWater: userGoals.dailyWater,
+        weeklyExercise: userGoals.weeklyExercise,
+        dailyExercise: Math.round(userGoals.weeklyExercise / 7)
+      }));
       
       // Update daily completions based on today's goals
       const todayKey = getTodayDateKey();
@@ -529,18 +542,42 @@ export default function Home() {
         exercise: todayGoals.exercise ? todayKey : null
       });
       
-      // Update weekly progress and daily completion status
+      // Update weekly progress
       setWeeklyProgress(weeklyProgress);
+      
+      // Update progress state with today's contributions
+      setProgress({
+        calories: { 
+          daily: todayGoals.calories ? todayContributions.calories : 0, 
+          todayContribution: todayContributions.calories 
+        },
+        protein: { 
+          daily: todayGoals.protein ? todayContributions.protein : 0, 
+          todayContribution: todayContributions.protein 
+        },
+        water: { 
+          daily: todayGoals.water ? todayContributions.water : 0, 
+          todayContribution: todayContributions.water 
+        },
+        exercise: { 
+          daily: todayGoals.exercise ? todayContributions.exercise : 0, 
+          todayContribution: todayContributions.exercise 
+        }
+      });
       
       // Update daily completion status for visual dots
       const dailyStatus = {};
       Object.keys(weeklyProgress).forEach(metric => {
-        dailyStatus[metric] = weeklyProgress[metric].dailyCompletions;
+        // Add fallback for missing dailyCompletions
+        dailyStatus[metric] = weeklyProgress[metric]?.dailyCompletions || [false, false, false, false, false, false, false];
       });
       setDailyCompletionStatus(dailyStatus);
       
+      console.log('[Dashboard] State updated successfully');
+      
     } catch (error) {
       console.error('Error loading goal progress:', error);
+      toast.error('Failed to load goal progress. Using default values.');
       // Fallback to localStorage if API fails
       loadDailyCompletions();
     }
@@ -552,8 +589,14 @@ export default function Home() {
         goalType: goalId
       });
       
+      console.log('[Dashboard] Complete goal response:', response.data);
+      
       if (response.data.success) {
-        return response.data;
+        return {
+          success: true,
+          message: response.data.message,
+          todaysContribution: response.data.todaysContribution
+        };
       } else if (response.data.alreadyCompleted) {
         return { alreadyCompleted: true, message: response.data.error };
       }
@@ -599,7 +642,7 @@ export default function Home() {
       },
       {
         id: 'water',
-        label: 'Drink 8 Glasses Water',
+        label: `Drink ${userProfile.dailyWater || 8} Glasses Water`,
         title: 'Daily Water',
         description: 'Stay hydrated',
         target: userProfile.dailyWater || 8,
@@ -612,10 +655,10 @@ export default function Home() {
       },
       {
         id: 'exercise',
-        label: 'Exercise 30 Minutes',
+        label: `Exercise ${Math.round((userProfile.weeklyExercise || 210) / 7)} Minutes`,
         title: 'Daily Exercise',
         description: 'Active lifestyle',
-        target: userProfile.dailyExercise || 30,
+        target: Math.round((userProfile.weeklyExercise || 210) / 7),
         current: progress.exercise.daily,
         unit: 'min',
         icon: FaRunning,
@@ -698,15 +741,18 @@ export default function Home() {
     const progressData = weeklyProgress[metric];
     const dailyStatus = dailyCompletionStatus[metric];
     const currentDayIndex = getCurrentDayIndex();
-    const completedDays = dailyStatus.filter(day => day).length;
+    
+    // Add null checking to prevent undefined filter errors
+    const safeDaily = dailyStatus || [false, false, false, false, false, false, false];
+    const completedDays = safeDaily.filter(day => day).length;
     
     return {
-      current: progressData.current,
-      target: progressData.target,
-      weeklyData: dailyStatus,
+      current: progressData?.current || 0,
+      target: progressData?.target || 0,
+      weeklyData: safeDaily,
       completedDays,
       currentDayIndex,
-      weeklyPercentage: Math.round((progressData.current / progressData.target) * 100)
+      weeklyPercentage: progressData?.target ? Math.round((progressData.current / progressData.target) * 100) : 0
     };
   };
 
@@ -789,14 +835,24 @@ export default function Home() {
     }
   };
 
+  const [goalCompletionLoading, setGoalCompletionLoading] = useState(false);
+
   // Handle goal click with daily completion tracking
   const handleGoalClick = async (goalId) => {
+    // Prevent multiple clicks
+    if (goalCompletionLoading) {
+      toast.info('Please wait, processing your goal completion...');
+      return;
+    }
+
     // Check if goal is already completed today
     if (isGoalCompletedToday(goalId)) {
       // Goal already completed today, show message
       toast.info(`You've already completed your ${goalId} goal today! Come back tomorrow 🌅`);
       return;
     }
+
+    setGoalCompletionLoading(true);
 
     try {
       // Complete goal via API
@@ -819,7 +875,16 @@ export default function Home() {
         };
         setDailyCompletions(newCompletions);
         
-        // Reload goal progress from API
+        // Update progress state with today's contribution
+        setProgress(prev => ({
+          ...prev,
+          [goalId]: {
+            daily: result.todaysContribution || prev[goalId].todayContribution,
+            todayContribution: result.todaysContribution || prev[goalId].todayContribution
+          }
+        }));
+        
+        // Reload goal progress from API to get updated weekly progress
         await loadGoalProgressFromAPI();
         
         // Regenerate goals
@@ -828,7 +893,19 @@ export default function Home() {
       
     } catch (error) {
       console.error('Error completing goal:', error);
-      toast.error('Failed to complete goal. Please try again.');
+      
+      // Provide specific error messages
+      if (error.response?.status === 400) {
+        toast.error(error.response.data.error || 'Invalid goal completion request');
+      } else if (error.response?.status === 401) {
+        toast.error('Please log in again to complete goals');
+      } else if (error.response?.status === 500) {
+        toast.error('Server error. Please try again in a moment.');
+      } else {
+        toast.error('Failed to complete goal. Please check your connection and try again.');
+      }
+    } finally {
+      setGoalCompletionLoading(false);
     }
   };
 
@@ -874,7 +951,6 @@ export default function Home() {
   }, {});
 
   const { fullDate } = getTodayInfo();
-
   if (loading) {
     return (
       <DashboardContainer>
@@ -884,7 +960,6 @@ export default function Home() {
       </DashboardContainer>
     );
   }
-
   return (
     <DashboardContainer>
       {/* Welcome Header */}
@@ -926,10 +1001,10 @@ export default function Home() {
                       cy="20" 
                       r="16" 
                     />
-                    <circle 
-                      className="ring-progress" 
-                      cx="20" 
-                      cy="20" 
+                    <circle
+                      className="ring-progress"
+                      cx="20"
+                      cy="20"
                       r="16" 
                       strokeDasharray={`${getWeeklyProgressData('calories').weeklyPercentage * 1.005} 100.5`}
                     />
@@ -950,7 +1025,6 @@ export default function Home() {
                 ))}
               </div>
             </ProgressCard>
-
             <ProgressCard>
               <div className="progress-header">
                 <div className="metric-info">
@@ -998,7 +1072,6 @@ export default function Home() {
                 ))}
               </div>
             </ProgressCard>
-
             <ProgressCard>
               <div className="progress-header">
                 <div className="metric-info">
@@ -1046,7 +1119,6 @@ export default function Home() {
                 ))}
               </div>
             </ProgressCard>
-
             <ProgressCard>
               <div className="progress-header">
                 <div className="metric-info">

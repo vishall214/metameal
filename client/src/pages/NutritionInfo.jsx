@@ -245,23 +245,23 @@ export default function NutritionInfo() {
             </SectionTitle>
             <InfoGrid>
               <InfoCard>
-                <CardTitle>Macronutrients in Indian Diet</CardTitle>
+                <CardTitle>Macronutrients</CardTitle>
                 <CardContent>
-                  Dal provides protein, rice/roti gives carbohydrates, and ghee supplies healthy fats.
+                  The major nutrients that we NEED everyday are called Macronutrients. Dal provides protein, rice/roti gives carbohydrates, and ghee supplies healthy fats.
                   Each plays a vital role in maintaining health and providing sustained energy.
                 </CardContent>
               </InfoCard>
               <InfoCard>
-                <CardTitle>Micronutrients from Spices</CardTitle>
+                <CardTitle>Micronutrients</CardTitle>
                 <CardContent>
-                  Indian spices like turmeric, cumin, coriander are rich in vitamins and minerals.
+                  The minor nutrients that we need in our meals. Indian spices like turmeric, cumin, coriander are rich in vitamins and minerals.
                   These micronutrients support immunity and overall health naturally.
                 </CardContent>
               </InfoCard>
               <InfoCard>
-                <CardTitle>Hydration Indian Style</CardTitle>
+                <CardTitle>Hydration</CardTitle>
                 <CardContent>
-                  Include water-rich foods like watermelon, cucumber, coconut water, and buttermilk.
+                  Staying hydrated is very important, Include water-rich foods like watermelon, cucumber, coconut water, and buttermilk.
                   Aim for 8-10 glasses daily, especially during hot Indian summers.
                 </CardContent>
               </InfoCard>
@@ -314,7 +314,7 @@ export default function NutritionInfo() {
             </SectionTitle>
             <InfoGrid>
               <InfoCard>
-                <CardTitle>Daily Indian Meal Recommendations</CardTitle>
+                <CardTitle>Daily Recommendations</CardTitle>
                 <CardContent>
                   • 2-3 servings of dal/legumes for protein
                   • 4-5 servings of vegetables (sabzi) and fruits
@@ -324,16 +324,16 @@ export default function NutritionInfo() {
                 </CardContent>
               </InfoCard>
               <InfoCard>
-                <CardTitle>Portion Control Indian Style</CardTitle>
+                <CardTitle>Portion Control</CardTitle>
                 <CardContent>
                   Use traditional measures: 1 katori dal, 2 rotis, 1 bowl rice, 1 small bowl sabzi. 
                   Follow the thali concept for balanced nutrition in every meal.
                 </CardContent>
               </InfoCard>
               <InfoCard>
-                <CardTitle>Indian Meal Timing</CardTitle>
+                <CardTitle>Meal Timing</CardTitle>
                 <CardContent>
-                  Follow traditional Indian meal patterns: Light breakfast with upma/poha, 
+                  Follow traditional meal patterns: Light breakfast with upma/poha or tifins, 
                   substantial lunch with dal-rice-sabzi, and light dinner before sunset when possible.
                 </CardContent>
               </InfoCard>
@@ -362,7 +362,7 @@ export default function NutritionInfo() {
                 </CardContent>
               </InfoCard>
               <InfoCard>
-                <CardTitle>What are good Indian sources of protein?</CardTitle>
+                <CardTitle>What are good sources of protein?</CardTitle>
                 <CardContent>
                   Dal (lentils), rajma, chana, paneer, dahi, eggs, fish, chicken, and nuts 
                   are all excellent sources of protein commonly found in Indian cuisine.

@@ -869,8 +869,8 @@ const Landing = () => {
             <HeroContent ref={heroContentRef}>
               <h1>Smart Indian Nutrition</h1>
               <p>
-                Plan your meals with AI assistance rooted in Indian culinary wisdom. Track your nutrition goals and build healthy eating habits 
-                with personalized desi meal recommendations tailored to your taste, region, and dietary traditions - from Punjabi tadka to Tamil rasam.
+                Plan your meals rooted in Indian culinary wisdom. Track your nutrition goals and build healthy eating habits 
+                with personalized desi meal recommendations tailored to your taste, and dietary traditions - from Punjabi tadka, Telangana pachadlu to Tamilnadu rasam.
               </p>
               <ButtonGroup>
                 <Button to="/register" variant="primary" size="lg">
@@ -894,7 +894,7 @@ const Landing = () => {
                 </div>
                 <div className="card-content">
                   <div className="value">Dal Tadka Thali</div>
-                  <div className="description">High protein, balanced Indian nutrition</div>
+                  <div className="description">High protein, balanced nutrition</div>
                 </div>
               </FloatingCard>
 
@@ -963,7 +963,7 @@ const Landing = () => {
         <Container>
           <SectionHeader>
             <div className="badge">Indian Foods Database</div>
-            <h2>Comprehensive Indian Cuisine Database</h2>
+            <h2>Comprehensive Cuisine Database</h2>
             <p>
               With our collection of over 350 authentic Indian recipes and dishes with detailed nutritional information.
             </p>
@@ -973,7 +973,7 @@ const Landing = () => {
             <FeatureCard delay="0.1s">
               <div className="icon">🍛</div>
               <h3>Regional Specialties</h3>
-              <p>From Punjabi rajma to Tamil sambar, discover authentic recipes from all Indian states with traditional cooking methods and nutritional profiles.</p>
+              <p>From kashmiri mirchi to karnataka sambar, discover authentic recipes from all Indian states with traditional cooking methods and nutritional profiles.</p>
               <div className="learn-more">
                 Explore Recipes <FaArrowRight />
               </div>

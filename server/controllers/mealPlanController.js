@@ -737,6 +737,7 @@ const rerollDay = asyncHandler(async (req, res) => {
     // Extract dietary and health info from filters
     const dietaryPrefs = userFilters.filter(f => ['veg', 'non-veg'].includes(f));
     const healthConditions = userFilters.filter(f => ['diabetes', 'thyroid', 'high BP'].includes(f));
+    const allergies = user.profile?.allergies || [];
     
     // Calculate calorie and nutrition goals from user preferences
     const calorieGoal = user.preferences?.calorieGoal || 2000;
@@ -988,6 +989,7 @@ const addNextDay = asyncHandler(async (req, res) => {
     // Extract dietary and health info from filters
     const dietaryPrefs = userFilters.filter(f => ['veg', 'non-veg'].includes(f));
     const healthConditions = userFilters.filter(f => ['diabetes', 'thyroid', 'high BP'].includes(f));
+    const allergies = user.profile?.allergies || [];
     
     // Calculate calorie and nutrition goals from user preferences
     const calorieGoal = user.preferences?.calorieGoal || 2000;
@@ -1415,7 +1417,7 @@ const generateSingleMeal = async (mealType, user, goals, dietaryPrefs, healthCon
   
   // Get user's dietary preferences
   const userFilters = user.profile?.filters || [];
-  const dietaryPrefs = userFilters.filter(f => ['veg', 'non-veg'].includes(f));
+  // dietaryPrefs is already passed as a parameter, no need to redeclare
   
   // Get user's valid filters for food selection
   const userValidFilters = getUserValidFilters(user);

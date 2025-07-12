@@ -46,7 +46,11 @@ const userSchema = new mongoose.Schema({
       enum: ['veg', 'non-veg', 'diabetes', 'thyroid', 'high BP']
     }],
     goals: [String],
-    avatar: { type: String }
+    // User's allergies for meal planning
+    allergies: [{
+      type: String,
+      enum: ['nuts', 'dairy', 'gluten', 'eggs', 'shellfish', 'soy', 'fish', 'sesame', 'sulfites', 'wheat']
+    }]
   },
   preferences: {
     calorieGoal: Number,

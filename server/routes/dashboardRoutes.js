@@ -8,7 +8,9 @@ const {
   addMeal,
   addGoal,
   completeGoal,
-  getGoalProgress
+  getGoalProgress,
+  getTodaysNutrition,
+  recalculateGoals
 } = require('../controllers/dashboardController');
 
 // Base route: /api/dashboard
@@ -27,4 +29,10 @@ router.put('/goals/:goalId', updateGoalStatus);
 router.post('/goals/complete', completeGoal);
 router.get('/goals/progress', getGoalProgress);
 
-module.exports = router; 
+// Nutrition routes
+router.get('/nutrition/today', getTodaysNutrition);
+
+// Goal calculation routes
+router.post('/goals/recalculate', recalculateGoals);
+
+module.exports = router;

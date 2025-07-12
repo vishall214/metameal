@@ -1,15 +1,33 @@
 const User = require('../models/User');
 const MealPlan = require('../models/MealPlan');
 const Dashboard = require('../models/Dashboard');
+const GoalCalculationService = require('../services/GoalCalculationService');
 const asyncHandler = require('express-async-handler');
 
-// @desc    Get user's dashboard data
+// @desc    Get user's dashboard data with smart goal calculations
 // @route   GET /api/dashboard
 // @access  Private
 const getDashboard = asyncHandler(async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     const mealPlans = await MealPlan.find({ user: req.user.id }).sort({ createdAt: -1 }).limit(1);
+    
+    // Get smart calculated goals
+    let calculatedGoals;
+    try {
+      calculatedGoals = await GoalCalculationService.calculateUserGoals(req.user.id);
+    } catch (error) {
+      console.log('Using fallback goals due to:', error.message);
+      calculatedGoals = {
+        calories: user.preferences?.calorieGoal || 2000,
+        protein: user.preferences?.proteinGoal || 120,
+        carbs: user.preferences?.carbGoal || 250,
+        fats: user.preferences?.fatGoal || 65,
+        water: 8,
+        exercise: 30,
+        calculated: false
+      };
+    }
     
     // Get today's day name
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -44,19 +62,19 @@ const getDashboard = asyncHandler(async (req, res) => {
       },
       calories: {
         consumed: totalCalories,
-        goal: user.preferences?.calorieGoal || 2000
+        goal: calculatedGoals.calories
       },
       protein: {
         consumed: totalProtein,
-        goal: user.preferences?.proteinGoal || 120
+        goal: calculatedGoals.protein
       },
       carbs: {
         consumed: totalCarbs,
-        goal: user.preferences?.carbGoal || 250
+        goal: calculatedGoals.carbs
       },
       fats: {
         consumed: totalFats,
-        goal: user.preferences?.fatGoal || 65
+        goal: calculatedGoals.fats
       },
       todayMeals: todayMeals,
       totalMealsPlanned: mealPlans.length > 0 ? mealPlans[0].meals?.length || 0 : 0,
@@ -78,10 +96,16 @@ const getDashboard = asyncHandler(async (req, res) => {
         },
         { 
           id: 'water',
-          text: 'Drink 8 glasses of water', 
+          text: `Drink ${calculatedGoals.water} glasses of water`, 
           completed: false 
         }
-      ]
+      ],
+      calculationDetails: {
+        calculated: calculatedGoals.calculated,
+        bmr: calculatedGoals.bmr,
+        tdee: calculatedGoals.tdee,
+        adjustments: calculatedGoals.adjustments
+      }
     };
 
     res.json(dashboard);
@@ -216,7 +240,7 @@ const addGoal = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Complete a goal for today
+// @desc    Complete a goal for today with smart calculations
 // @route   POST /api/dashboard/goals/complete
 // @access  Private
 const completeGoal = asyncHandler(async (req, res) => {
@@ -227,18 +251,49 @@ const completeGoal = asyncHandler(async (req, res) => {
       return res.status(400).json({ error: 'Invalid goal type' });
     }
 
+    // Get user data for goal calculations
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get smart calculated goals
+    let calculatedGoals;
+    try {
+      calculatedGoals = await GoalCalculationService.calculateUserGoals(req.user.id);
+    } catch (error) {
+      console.log('Using fallback goals for completion:', error.message);
+      calculatedGoals = {
+        calories: user.preferences?.calorieGoal || 2000,
+        protein: user.preferences?.proteinGoal || 120,
+        water: 8,
+        exercise: 30
+      };
+    }
+
     // Find or create dashboard for user
     let dashboard = await Dashboard.findOne({ user: req.user.id });
     if (!dashboard) {
       dashboard = new Dashboard({ 
         user: req.user.id,
-        dailyGoals: [],
-        weeklyProgress: []
+        weeklyProgress: {
+          calories: 0,
+          protein: 0,
+          water: 0,
+          exercise: 0
+        },
+        todaysGoals: {
+          calories: false,
+          protein: false,
+          water: false,
+          exercise: false
+        }
       });
+      await dashboard.save();
     }
 
     // Check if goal is already completed today
-    const todayGoals = dashboard.getTodayGoals();
+    const todayGoals = dashboard.getTodaysGoals();
     if (todayGoals && todayGoals[goalType]) {
       return res.status(400).json({ 
         error: `You've already completed your ${goalType} goal today! Come back tomorrow 🌅`,
@@ -246,33 +301,24 @@ const completeGoal = asyncHandler(async (req, res) => {
       });
     }
 
-    // Get current day index (0 = Monday, 6 = Sunday)
-    const getCurrentDayIndex = () => {
-      const today = new Date();
-      const day = today.getDay();
-      return day === 0 ? 6 : day - 1; // Convert Sunday (0) to 6, Monday (1) to 0, etc.
-    };
-
-    const currentDayIndex = getCurrentDayIndex();
-
     // Mark goal as completed for today
-    dashboard.setTodayGoal(goalType, true);
+    dashboard.setTodaysGoal(goalType, true);
+    
+    // Calculate today's contribution based on smart goals
+    const todaysContribution = calculatedGoals[goalType] || 0;
     
     // Update weekly progress
-    dashboard.updateWeeklyProgress(goalType, currentDayIndex, true);
+    await dashboard.updateWeeklyProgress(goalType, todaysContribution);
 
     await dashboard.save();
 
-    // Get updated goal data
-    const updatedTodayGoals = dashboard.getTodayGoals();
-    const weeklyProgress = dashboard.getWeeklyProgress(goalType);
-
     res.json({
       success: true,
-      message: `🎉 ${goalType.charAt(0).toUpperCase() + goalType.slice(1)} goal completed! Great job!`,
-      todayGoals: updatedTodayGoals,
-      weeklyProgress: weeklyProgress,
-      goalType: goalType
+      message: `🎉 ${goalType.charAt(0).toUpperCase() + goalType.slice(1)} goal completed! Great job! (+${todaysContribution} ${goalType === 'calories' ? 'kcal' : goalType === 'protein' ? 'g' : goalType === 'water' ? 'glasses' : 'min'})`,
+      todayGoals: dashboard.getTodaysGoals(),
+      goalType: goalType,
+      todaysContribution: todaysContribution,
+      calculatedGoals: calculatedGoals
     });
 
   } catch (error) {
@@ -281,57 +327,215 @@ const completeGoal = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get goal progress data
+// @desc    Get goal progress data with smart calculations
 // @route   GET /api/dashboard/goals/progress
 // @access  Private
 const getGoalProgress = asyncHandler(async (req, res) => {
   try {
+    // Get user data for goal calculations
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get smart calculated goals
+    let calculatedGoals;
+    try {
+      calculatedGoals = await GoalCalculationService.calculateUserGoals(req.user.id);
+    } catch (error) {
+      console.log('Using fallback goals for progress:', error.message);
+      calculatedGoals = {
+        calories: user.preferences?.calorieGoal || 2000,
+        protein: user.preferences?.proteinGoal || 120,
+        carbs: user.preferences?.carbGoal || 250,
+        fats: user.preferences?.fatGoal || 65,
+        water: 8,
+        exercise: 210, // weekly
+        calculated: false
+      };
+    }
+
     let dashboard = await Dashboard.findOne({ user: req.user.id });
     
     if (!dashboard) {
-      // Return empty progress if dashboard doesn't exist yet
-      return res.json({
-        todayGoals: { calories: false, protein: false, water: false, exercise: false },
+      // Create new dashboard
+      dashboard = new Dashboard({ 
+        user: req.user.id,
         weeklyProgress: {
-          calories: { current: 0, target: 7, dailyCompletions: new Array(7).fill(false) },
-          protein: { current: 0, target: 7, dailyCompletions: new Array(7).fill(false) },
-          water: { current: 0, target: 56, dailyCompletions: new Array(7).fill(false) },
-          exercise: { current: 0, target: 7, dailyCompletions: new Array(7).fill(false) }
+          calories: 0,
+          protein: 0,
+          water: 0,
+          exercise: 0
+        },
+        todaysGoals: {
+          calories: false,
+          protein: false,
+          water: false,
+          exercise: false
         }
       });
+      await dashboard.save();
     }
 
-    const todayGoals = dashboard.getTodayGoals() || { 
+    // Initialize weekly progress if needed
+    await dashboard.initializeWeeklyProgress();
+
+    const todayGoals = dashboard.getTodaysGoals() || { 
       calories: false, protein: false, water: false, exercise: false 
     };
 
-    const weeklyProgress = {};
-    ['calories', 'protein', 'water', 'exercise'].forEach(metric => {
-      const progress = dashboard.getWeeklyProgress(metric);
-      if (progress) {
-        weeklyProgress[metric] = {
-          current: progress.current,
-          target: progress.target,
-          dailyCompletions: progress.dailyCompletions
-        };
-      } else {
-        const targets = { calories: 7, protein: 7, water: 56, exercise: 7 };
-        weeklyProgress[metric] = {
-          current: 0,
-          target: targets[metric],
-          dailyCompletions: new Array(7).fill(false)
-        };
+    // Get weekly targets using smart calculations
+    const weeklyTargets = await dashboard.getWeeklyTargets();
+
+    const weeklyProgress = {
+      calories: {
+        current: dashboard.weeklyProgress.calories,
+        target: weeklyTargets.calories,
+        dailyCompletions: dashboard.getWeeklyCompletions('calories')
+      },
+      protein: {
+        current: dashboard.weeklyProgress.protein,
+        target: weeklyTargets.protein,
+        dailyCompletions: dashboard.getWeeklyCompletions('protein')
+      },
+      water: {
+        current: dashboard.weeklyProgress.water,
+        target: weeklyTargets.water,
+        dailyCompletions: dashboard.getWeeklyCompletions('water')
+      },
+      exercise: {
+        current: dashboard.weeklyProgress.exercise,
+        target: weeklyTargets.exercise,
+        dailyCompletions: dashboard.getWeeklyCompletions('exercise')
       }
-    });
+    };
+
+    // Today's potential contributions based on smart calculations
+    const todayContributions = {
+      calories: calculatedGoals.calories,
+      protein: calculatedGoals.protein,
+      water: calculatedGoals.water,
+      exercise: calculatedGoals.exercise / 7 // Convert weekly to daily
+    };
 
     res.json({
       todayGoals,
-      weeklyProgress
+      weeklyProgress,
+      todayContributions,
+      userGoals: {
+        dailyCalories: calculatedGoals.calories,
+        dailyProtein: calculatedGoals.protein,
+        dailyCarbs: calculatedGoals.carbs,
+        dailyFats: calculatedGoals.fats,
+        dailyWater: calculatedGoals.water,
+        weeklyExercise: calculatedGoals.exercise
+      },
+      calculationDetails: {
+        calculated: calculatedGoals.calculated,
+        bmr: calculatedGoals.bmr,
+        tdee: calculatedGoals.tdee,
+        adjustments: calculatedGoals.adjustments
+      }
     });
 
   } catch (error) {
     console.error('Error getting goal progress:', error);
     res.status(500).json({ error: 'Failed to get goal progress' });
+  }
+});
+
+// Helper function to calculate today's nutritional contribution from meals
+const calculateTodaysNutritionFromMeals = async (userId) => {
+  try {
+    // Get today's day name
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const today = days[new Date().getDay()];
+    
+    // Find user's active meal plan
+    const activeMealPlan = await MealPlan.findOne({ 
+      user: userId, 
+      status: 'active' 
+    }).populate('meals.meal');
+    
+    if (!activeMealPlan) {
+      return { calories: 0, protein: 0, carbs: 0, fats: 0 };
+    }
+    
+    // Filter meals for today
+    const todaysMeals = activeMealPlan.meals.filter(meal => meal.day === today);
+    
+    // Calculate total nutrition from today's meals
+    let totalCalories = 0;
+    let totalProtein = 0;
+    let totalCarbs = 0;
+    let totalFats = 0;
+    
+    todaysMeals.forEach(mealItem => {
+      const meal = mealItem.meal;
+      if (meal) {
+        totalCalories += Number(meal.calories) || 0;
+        totalProtein += Number(meal.protein) || 0;
+        totalCarbs += Number(meal.carbs) || 0;
+        totalFats += Number(meal.fats) || 0;
+      }
+    });
+    
+    return {
+      calories: Math.round(totalCalories),
+      protein: Math.round(totalProtein),
+      carbs: Math.round(totalCarbs),
+      fats: Math.round(totalFats),
+      mealsCount: todaysMeals.length
+    };
+    
+  } catch (error) {
+    console.error('Error calculating nutrition from meals:', error);
+    return { calories: 0, protein: 0, carbs: 0, fats: 0, mealsCount: 0 };
+  }
+};
+
+// @desc    Get today's nutrition contribution from meals
+// @route   GET /api/dashboard/nutrition/today
+// @access  Private
+const getTodaysNutrition = asyncHandler(async (req, res) => {
+  try {
+    const nutrition = await calculateTodaysNutritionFromMeals(req.user.id);
+    
+    res.json({
+      success: true,
+      nutrition: nutrition,
+      date: new Date().toDateString()
+    });
+    
+  } catch (error) {
+    console.error('Error getting today\'s nutrition:', error);
+    res.status(500).json({ error: 'Failed to get today\'s nutrition' });
+  }
+});
+
+// @desc    Recalculate user goals based on updated profile
+// @route   POST /api/dashboard/goals/recalculate
+// @access  Private
+const recalculateGoals = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Recalculate goals using the smart service
+    const result = await GoalCalculationService.updateUserPreferences(userId);
+    
+    res.json({
+      success: true,
+      message: 'Goals recalculated successfully!',
+      user: result.user,
+      calculatedGoals: result.calculatedGoals
+    });
+
+  } catch (error) {
+    console.error('Error recalculating goals:', error);
+    res.status(500).json({ 
+      error: 'Failed to recalculate goals',
+      details: error.message 
+    });
   }
 });
 
@@ -343,5 +547,7 @@ module.exports = {
   addMeal,
   addGoal,
   completeGoal,
-  getGoalProgress
-}; 
+  getGoalProgress,
+  getTodaysNutrition,
+  recalculateGoals
+};
