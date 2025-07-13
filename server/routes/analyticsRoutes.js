@@ -2,9 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middlewares/authMiddleware');
 
-// TODO: Import analytics controller functions once created
-// const { getUserStats, getMealStats } = require('../controllers/analyticsController');
-
 // Protected routes
 router.use(protect);
 

@@ -26,7 +26,7 @@ const mealPlanSchema = new mongoose.Schema({
     },
     date: {
       type: Date,
-      required: false // Make it optional for backward compatibility
+      required: false
     },
     mealType: {
       type: String,

@@ -71,7 +71,7 @@ export default function NotFound() {
       <ErrorCode>404</ErrorCode>
       <Title>Page Not Found</Title>
       <Message>
-        Oops! The page you're looking for seems to have vanished into thin air.
+        Oops! The page you're looking for seems to has vanished into thin air.
         Don't worry, we'll help you find your way back.
       </Message>
       <ButtonGroup>

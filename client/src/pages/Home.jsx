@@ -798,6 +798,29 @@ const handleGoalClick = async (goalId) => {
 
   setGoalCompletionLoading(true);
 
+  // Instantly mark the goal as completed in local state for immediate UI feedback
+  setProgress(prev => {
+    // Use a sensible fallback for calories (target value), others use 1
+    let fallback = 1;
+    if (goalId === 'calories') {
+      fallback = userProfile?.dailyCalories || 2000;
+    } else if (goalId === 'protein') {
+      fallback = userProfile?.dailyProtein || 120;
+    } else if (goalId === 'water') {
+      fallback = userProfile?.dailyWater || 8;
+    } else if (goalId === 'exercise') {
+      fallback = Math.round((userProfile?.weeklyExercise || 210) / 7);
+    }
+    return {
+      ...prev,
+      [goalId]: {
+        daily: prev[goalId].todayContribution || fallback,
+        todayContribution: prev[goalId].todayContribution || fallback
+      }
+    };
+  });
+  setGoals(generateGoals());
+
   try {
     const result = await completeGoalInAPI(goalId);
 
@@ -809,11 +832,20 @@ const handleGoalClick = async (goalId) => {
     if (result.success) {
       toast.success(result.message);
 
-      // ✅ Fetch updated progress and goal completions
+      // Update the clicked goal's progress with backend value
+      setProgress(prev => ({
+        ...prev,
+        [goalId]: {
+          daily: result.todaysContribution || prev[goalId].todayContribution,
+          todayContribution: result.todaysContribution || prev[goalId].todayContribution
+        }
+      }));
+
+      // Fetch updated weekly progress and completion status
       await loadGoalProgressFromAPI();
 
-      // ✅ Force UI goal list to re-render with new state
-      setGoals(generateGoals()); // ← ADD THIS LINE
+      // Regenerate goals to update UI
+      setGoals(generateGoals());
     }
 
   } catch (error) {

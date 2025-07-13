@@ -1693,16 +1693,12 @@ export default function FoodExplorer() {
   };
 
   const handleAddToFavourites = (dish) => {
-    // Only show toast for successful actions
-    // toast.success(`${dish.name} added to your favourites! ❤️`);
     // TODO: Integration with favourites system
     // navigate('/favourites', { state: { selectedDish: dish } });
   };
 
   const handleViewRecipe = (dish) => {
-    // Remove unnecessary toast message for viewing recipe
-    // toast.info(`Opening recipe for ${dish.name} 👨‍🍳`);
-    // Open recipe modal or navigate to recipe page
+
   };
 
   // Calculate center point of a polygon for circular markers

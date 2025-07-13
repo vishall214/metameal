@@ -240,7 +240,6 @@ const addGoal = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Complete a goal for today with smart calculations
 // @route   POST /api/dashboard/goals/complete
 // @access  Private
 const completeGoal = asyncHandler(async (req, res) => {
@@ -299,7 +298,7 @@ const completeGoal = asyncHandler(async (req, res) => {
 
     dashboard.setTodaysGoal(goalType, true);
 
-    // ✅ Use daily contribution for exercise instead of weekly total
+    // Use daily contribution for exercise instead of weekly total
     let todaysContribution;
     if (goalType === 'exercise') {
       todaysContribution = Math.round((calculatedGoals.exercise || 210) / 7);
@@ -310,7 +309,7 @@ const completeGoal = asyncHandler(async (req, res) => {
     dashboard.updateWeeklyProgress(goalType, todaysContribution);
     await dashboard.save();
 
-    // ✅ Store progress in user.progress[]
+    // Store progress in user.progress[]
     const todayKey = new Date().toDateString();
     const userProgress = user.progress || [];
 
@@ -345,7 +344,6 @@ const completeGoal = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get goal progress data with smart calculations
 // @route   GET /api/dashboard/goals/progress
 // @access  Private
 const getGoalProgress = asyncHandler(async (req, res) => {
@@ -398,7 +396,7 @@ const getGoalProgress = asyncHandler(async (req, res) => {
       calories: false, protein: false, water: false, exercise: false 
     };
 
-    // ✅ Override with user.progress record for today
+    // Override with user.progress record for today
     const todayKey = new Date().toDateString();
     const todayDbRecord = user.progress?.find(p => p.date === todayKey);
     if (todayDbRecord) {
@@ -518,7 +516,6 @@ const calculateTodaysNutritionFromMeals = async (userId) => {
   }
 };
 
-// @desc    Get today's nutrition contribution from meals
 // @route   GET /api/dashboard/nutrition/today
 // @access  Private
 const getTodaysNutrition = asyncHandler(async (req, res) => {
@@ -536,8 +533,6 @@ const getTodaysNutrition = asyncHandler(async (req, res) => {
     res.status(500).json({ error: 'Failed to get today\'s nutrition' });
   }
 });
-
-// @desc    Recalculate user goals based on updated profile
 // @route   POST /api/dashboard/goals/recalculate
 // @access  Private
 const recalculateGoals = asyncHandler(async (req, res) => {

@@ -116,9 +116,8 @@ export default function About() {
       <HeroSection>
         <Title>About MetaMeal</Title>
         <Subtitle>
-          MetaMeal is your personal nutrition companion rooted in Indian culinary wisdom, powered by artificial intelligence 
-          to help you achieve your swasthya (health) and wellness goals through personalized desi meal planning 
-          and expert guidance from Indian nutrition specialists.
+          MetaMeal is your personal nutrition companion rooted in Indian culinary wisdom, powered by ai 
+          to help you achieve your swasthya (health) and wellness goals through personalized meal planning.
         </Subtitle>
         <CTAButton to="/register">Get Started</CTAButton>
       </HeroSection>

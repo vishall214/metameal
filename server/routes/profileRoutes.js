@@ -8,7 +8,6 @@ const {
   getNutritionGoals
 } = require('../controllers/profileController');
 
-// All routes are protected
 router.use(protect);
 
 // Profile routes

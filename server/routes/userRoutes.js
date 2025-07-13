@@ -6,7 +6,6 @@ const { saveQuizAnswers } = require('../controllers/userController');
 // Protect all routes below
 router.use(protect);
 
-// TODO: Add actual route handlers once controller is created
 router.get('/profile', (req, res) => {
   res.json({ message: 'Profile route' });
 });
