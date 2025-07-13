@@ -15,7 +15,7 @@ const gridStyles = `
     width: 100%;
     min-height: 100vh;
     background: var(--bg-dark);
-    padding: 2rem;
+    padding: 2rem 0;
     margin: 0;
     overflow-x: hidden;
   }
@@ -24,7 +24,7 @@ const gridStyles = `
     width: 100%;
     max-width: 1400px;
     padding: 0;
-    margin: 0 auto;
+    margin: 0;
     overflow-x: hidden;
   }
   
@@ -738,7 +738,7 @@ const Library = () => {
     };
   }, [searchTimeout]);
   return (
-    <Layout>
+    <Layout customMargin="1.5vw">
       <style>{gridStyles}</style>
       <div className="library-main">
         <div className="library-content">

@@ -11,11 +11,14 @@ const LayoutContainer = styled.div`
 
 const MainContent = styled.main`
   flex: 1;
-  margin-left: ${props => props.isPublic ? '0' : '250px'};
+  margin-left: ${props =>
+    props.isPublic || props.noMargin
+      ? '0'
+      : props.customMargin || '250px'};
   min-height: 100vh;
   background: var(--bg-dark);
   transition: margin-left 0.3s ease;
-  
+
   @media (max-width: 768px) {
     margin-left: 0;
   }
@@ -27,7 +30,7 @@ const PublicContent = styled.main`
   background: var(--bg-dark);
 `;
 
-export default function Layout({ children, isPublic = false }) {
+export default function Layout({ children, isPublic = false, noMargin = false, customMargin }) {
   if (isPublic) {
     return (
       <PublicContent>
@@ -39,7 +42,7 @@ export default function Layout({ children, isPublic = false }) {
   return (
     <LayoutContainer>
       <Sidebar />
-      <MainContent>
+      <MainContent noMargin={noMargin} customMargin={customMargin}>
         {children}
       </MainContent>
     </LayoutContainer>

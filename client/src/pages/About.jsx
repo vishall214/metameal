@@ -94,12 +94,12 @@ const CTAButton = styled(Link)`
 const features = [
   {
     icon: <FaLeaf />,
-    title: "Swasth Bharat Living",
+    title: "Swasth Living",
     description: "Our platform helps you make informed decisions about your nutrition using traditional Indian knowledge combined with modern science."
   },
   {
     icon: <FaBrain />,
-    title: "AI-Powered Desi Nutrition",
+    title: "Smart Nutrition",
     description: "Advanced algorithms analyze your preferences, regional tastes, and health goals to create personalized Indian meal plans."
   },
   {
@@ -107,11 +107,6 @@ const features = [
     title: "Track Your Wellness Journey",
     description: "Monitor your nutrition progress with detailed analytics focused on Indian dietary patterns and seasonal eating habits."
   },
-  {
-    icon: <FaUsers />,
-    title: "Indian Health Community",
-    description: "Connect with others following traditional Indian nutrition practices and share recipes, tips, and experiences."
-  }
 ];
 
 export default function About() {
